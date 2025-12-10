@@ -1,8 +1,3 @@
-Вахтанг, ловите **финальный код** — я уже убрал `reload()` и добавил **очистку хэша** при выходе и при загрузке, чтобы токен не «залипал».
-
-Скопируйте **весь код ниже**, замените `index.html` в репозитории и **сохраните коммит** — всё заработает циклично.
-
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -36,8 +31,8 @@
 
 <div id="auth-ui">
   <div id="user-status">Загрузка...</div>
-  <button id="sign-in-btn" style="display:none" onclick="signInWithGoogle()">Войти через Google</button>
-  <button id="sign-out-btn" style="display:none" onclick="signOut()">Выход</button>
+  <button id="sign-in-btn" onclick="signInWithGoogle()">Войти через Google</button>
+  <button id="sign-out-btn" onclick="signOut()">Выйти</button>
 </div>
 
 <div class="container">
@@ -100,7 +95,7 @@
 
   // ==========  ИНИЦИАЛИЗАЦИЯ  ==========
   document.addEventListener('DOMContentLoaded', () => {
-    // очистка хэша при загрузке, чтобы не "входить" автоматически
+    // убираем хэш при загрузке, чтобы не входить автоматически
     if (window.location.hash.includes('access_token')) {
       window.location.replace(window.location.pathname);
       return;
@@ -141,7 +136,7 @@
       statusEl.textContent = `👤 ${currentUser.email}`;
       signInBtn.style.display = 'none';
       signOutBtn.style.display = 'inline-block';
-      loadArchive();
+      renderArchive();
     } else {
       statusEl.textContent = 'Не авторизован';
       signInBtn.style.display = 'inline-block';
@@ -243,6 +238,3 @@
 
 </body>
 </html>
-```
-
-Сохраните этот файл как `index.html`, залейте в репозиторий `varibigrich12345-cmyk.github.io`, дождитесь публикации — и **вход/выход через Google будет работать циклично** без «залипания» токена.
