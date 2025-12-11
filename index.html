@@ -31,8 +31,8 @@
 
 <div id="auth-ui">
   <div id="user-status">Загрузка...</div>
-  <button id="sign-in-btn" onclick="signInWithGoogle()">Войти через Google</button>
-  <button id="sign-out-btn" onclick="signOut()">Выйти</button>
+  <button id="sign-in-btn" style="display:none;" onclick="signInWithGoogle()">Войти через Google</button>
+  <button id="sign-out-btn" style="display:none;" onclick="signOut()">Выход</button>
 </div>
 
 <div class="container">
@@ -84,45 +84,41 @@
 </div>
 
 <script>
-  // ==========  SUPABASE  ==========
+  // ========== SUPABASE ==========
   const supabaseClient = supabase.createClient(
     'https://rylmxrzbxvnwjciuwweu.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bG14cnpieHZud2pjaXV3d2V1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxOTMyNjIsImV4cCI6MjA4MDc2OTI2Mn0.5y4ArJpfjZ08W8Z54byTSP3PHxKiKQY4_lvX0PL9pco'
   );
 
-  // ==========  ГЛОБАЛЬНЫЕ  ==========
-  let workIndex = 1, completedIndex = 1, partIndex = 1, currentUser = null, userRole = null;
+  // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+  let workIndex = 1, completedIndex = 1, partIndex = 1;
+  let currentUser = null, userRole = null;
 
-  // ==========  ИНИЦИАЛИЗАЦИЯ  ==========
+  // ========== ИНИЦИАЛИЗАЦИЯ ==========
   document.addEventListener('DOMContentLoaded', () => {
-    // убираем хэш при загрузке, чтобы не входить автоматически
-    if (window.location.hash.includes('access_token')) {
-      window.location.replace(window.location.pathname);
-      return;
-    }
     const now = new Date();
     document.getElementById('current-date').value = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
-    generateOrderNumber(now);
+    generateOrderNumber();
   });
 
-  function generateOrderNumber(dt) {
-    const last = parseInt(localStorage.getItem('lastClaimSeq') || '0') + 1;
-    localStorage.setItem('lastClaimSeq', last.toString());
-    document.getElementById('order-number').value = `СТА-${dt.getFullYear()}-${String(last).padStart(3,'0')}`;
+  function generateOrderNumber() {
+    const lastSeq = parseInt(localStorage.getItem('lastClaimSeq') || '0') + 1;
+    localStorage.setItem('lastClaimSeq', lastSeq.toString());
+    document.getElementById('order-number').value = `СТА-${new Date().getFullYear()}-${String(lastSeq).padStart(3,'0')}`;
   }
 
-  // ==========  АВТОРИЗАЦИЯ  ==========
+  // ========== АВТОРИЗАЦИЯ ==========
   async function signInWithGoogle() {
-    const {error} = await supabaseClient.auth.signInWithOAuth({
+    const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
-      options: {redirectTo: 'https://varibigrich12345-cmyk.github.io'}
+      options: { redirectTo: 'https://varibigrich12345-cmyk.github.io' }
     });
     if (error) alert('❌ Ошибка входа: ' + error.message);
   }
 
   async function signOut() {
     await supabaseClient.auth.signOut();
-    window.location.replace(window.location.pathname);
+    window.location.reload();
   }
 
   supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -143,7 +139,7 @@
     }
   });
 
-  // ==========  ТАБЛИЦЫ  ==========
+  // ========== ТАБЛИЦЫ ==========
   function addWorkRow() {
     const tbody = document.getElementById('works-body');
     const row = document.createElement('tr');
@@ -164,21 +160,22 @@
   }
   function deleteRow(btn) { btn.closest('tr').remove(); }
 
-  // ==========  НАВИГАЦИЯ  ==========
+  // ========== НАВИГАЦИЯ ==========
   function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach((e, i) => e.classList.toggle('active', (tab === 'form' && i === 0) || (tab === 'archive' && i === 1)));
+    document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
     document.getElementById(`${tab}-tab`).classList.add('active');
+    document.querySelector(`.tab-btn:nth-child(${tab === 'form' ? 1 : 2})`).classList.add('active');
     if (tab === 'archive') renderArchive();
   }
 
-  // ==========  АРХИВ  ==========
+  // ========== АРХИВ ==========
   async function renderArchive() {
     if (!currentUser) {
       document.getElementById('archive-list').innerHTML = '<p>Требуется вход для просмотра архива.</p>';
       return;
     }
-    const {data, error} = await supabaseClient.from('claims').select('*').order('created_at', {ascending: false});
+    const { data, error } = await supabaseClient.from('claims').select('*').order('created_at', { ascending: false });
     const el = document.getElementById('archive-list');
     if (error) el.innerHTML = '<p>Ошибка загрузки.</p>';
     else if (data?.length) el.innerHTML = data.map(c => `
@@ -187,11 +184,12 @@
         Авто: ${c.car_brand} (${c.car_number})<br>
         Статус: ${c.status === 'zakaz_naryad' ? 'Заказ-наряд' : 'Заявка'}<br>
         <button class="btn-sm" onclick="loadClaim('${c.id}')">Открыть</button>
-      </div>`).join('');
+      </div>`
+    ).join('');
     else el.innerHTML = '<p>Архив пуст.</p>';
   }
 
-  // ==========  ПЕЧАТЬ / СОХРАНЕНИЕ  ==========
+  // ========== ПЕЧАТЬ / СОХРАНЕНИЕ ==========
   async function printClaim() {
     if (!currentUser) {
       if (confirm('Для сохранения требуется вход. Авторизоваться?')) signInWithGoogle();
@@ -212,7 +210,7 @@
       created_by: currentUser.id
     };
     const id = document.getElementById('claim-id').value;
-    const {error} = id
+    const { error } = id
       ? await supabaseClient.from('claims').update(data).eq('id', id)
       : await supabaseClient.from('claims').insert(data);
     if (error) { console.error(error); alert('❌ Ошибка сохранения: ' + error.message); }
@@ -223,7 +221,7 @@
     document.getElementById('claim-id').value = '';
     ['client-company','contact','master','client-name','car-brand','car-number'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('mileage').value = '123456';
-    generateOrderNumber(new Date());
+    generateOrderNumber();
   }
 </script>
 </body>
