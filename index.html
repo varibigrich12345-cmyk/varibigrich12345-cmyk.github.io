@@ -102,13 +102,13 @@
     }
     const now = new Date();
     document.getElementById('current-date').value = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}.${now.getFullYear()}`;
-    generateOrderNumber();
+    generateOrderNumber(now);
   });
 
-  function generateOrderNumber() {
+  function generateOrderNumber(dt) {
     const last = parseInt(localStorage.getItem('lastClaimSeq') || '0') + 1;
     localStorage.setItem('lastClaimSeq', last.toString());
-    document.getElementById('order-number').value = `СТА-${now.getFullYear()}-${String(last).padStart(3,'0')}`;
+    document.getElementById('order-number').value = `СТА-${dt.getFullYear()}-${String(last).padStart(3,'0')}`;
   }
 
   // ==========  АВТОРИЗАЦИЯ  ==========
@@ -122,7 +122,6 @@
 
   async function signOut() {
     await supabaseClient.auth.signOut();
-    // убираем хэш и переходим в чистый корень
     window.location.replace(window.location.pathname);
   }
 
@@ -224,15 +223,7 @@
     document.getElementById('claim-id').value = '';
     ['client-company','contact','master','client-name','car-brand','car-number'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('mileage').value = '123456';
-    generateOrderNumber();
-  }
-
-  // ==========  УТИЛИТЫ  ==========
-  const now = new Date();
-  function generateOrderNumber() {
-    const last = parseInt(localStorage.getItem('lastClaimSeq') || '0') + 1;
-    localStorage.setItem('lastClaimSeq', last.toString());
-    document.getElementById('order-number').value = `СТА-${now.getFullYear()}-${String(last).padStart(3,'0')}`;
+    generateOrderNumber(new Date());
   }
 </script>
 </body>
