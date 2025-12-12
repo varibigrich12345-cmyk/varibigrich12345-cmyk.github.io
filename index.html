@@ -126,7 +126,6 @@
       .container { box-shadow: none; border: none; }
     }
 
-    /* Auth popup */
     #auth-dialog {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -151,14 +150,12 @@
     }
   </style>
 
-  <!-- Supabase SDK -->
+  <!-- Supabase SDK — ОБЯЗАТЕЛЬНО перед скриптом -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- jsPDF for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
-<!-- Auth Dialog -->
 <div id="auth-dialog">
   <div class="auth-form">
     <h3>Вход в систему</h3>
@@ -301,7 +298,6 @@
     const now = new Date();
     document.getElementById('claim-number').value = `SR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*1000)).padStart(3,'0')}`;
     
-    // Проверка сессии
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
         currentUser = data.session.user;
@@ -361,11 +357,7 @@
   // ========== ШАБЛОНЫ ==========
   async function suggestTemplate(complaint) {
     if (!complaint.trim()) return;
-    
-    const { data } = await supabase
-      .from('templates')
-      .select('*');
-
+    const { data } = await supabase.from('templates').select('*');
     let matched = null;
     for (const t of data || []) {
       if (t.keywords.some(kw => complaint.toLowerCase().includes(kw.toLowerCase()))) {
@@ -373,7 +365,6 @@
         break;
       }
     }
-
     const el = document.getElementById('template-suggestion');
     if (matched) {
       currentTemplate = matched;
@@ -387,12 +378,10 @@
 
   function applyTemplate() {
     if (!currentTemplate) return;
-
     document.getElementById('works-body').innerHTML = '';
     document.getElementById('parts-body').innerHTML = '';
     workIndex = 1; partIndex = 1;
 
-    // Работы
     if (currentTemplate.works) {
       try {
         const works = JSON.parse(currentTemplate.works);
@@ -405,15 +394,13 @@
             <td><input type="number" value="${w.hours || 0}" step="0.1" oninput="calculateSums()"></td>
             <td><input type="number" value="${w.price || 0}" oninput="calculateSums()"></td>
             <td class="sum-cell">0.00</td>
-            <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>
-          `;
+            <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
           document.getElementById('works-body').appendChild(row);
           workIndex++;
         });
       } catch (e) { console.error(e); }
     }
 
-    // Запчасти
     if (currentTemplate.parts) {
       try {
         const parts = JSON.parse(currentTemplate.parts);
@@ -426,14 +413,12 @@
             <td><input type="number" value="${p.qty || 1}" min="1" oninput="calculateSums()"></td>
             <td><input type="number" value="${p.price || 0}" oninput="calculateSums()"></td>
             <td class="sum-cell">0.00</td>
-            <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>
-          `;
+            <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
           document.getElementById('parts-body').appendChild(row);
           partIndex++;
         });
       } catch (e) { console.error(e); }
     }
-
     calculateSums();
     document.getElementById('template-suggestion').style.display = 'none';
   }
@@ -449,8 +434,7 @@
       <td><input type="number" value="0" step="0.1" oninput="calculateSums()"></td>
       <td><input type="number" value="0" oninput="calculateSums()"></td>
       <td class="sum-cell">0.00</td>
-      <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>
-    `;
+      <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
     tbody.appendChild(row); workIndex++;
   }
 
@@ -464,8 +448,7 @@
       <td><input type="number" value="1" min="1" oninput="calculateSums()"></td>
       <td><input type="number" value="0" oninput="calculateSums()"></td>
       <td class="sum-cell">0.00</td>
-      <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>
-    `;
+      <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
     tbody.appendChild(row); partIndex++;
   }
 
@@ -514,8 +497,7 @@
         <strong>№${c.number}</strong> — ${c.client_fio} (${c.car_number})<br>
         Статус: ${c.status === 'agreed' ? 'Согласовано' : 'Черновик'}<br>
         <button class="btn-sm" onclick="loadClaim('${c.id}')">Открыть</button>
-      </div>
-    `).join('') : '<p>Заявок пока нет.</p>');
+      </div>`).join('') : '<p>Заявок пока нет.</p>');
   }
 
   async function loadClaim(id) {
@@ -547,8 +529,7 @@
         <td><input type="number" value="${w.hours || 0}" step="0.1" oninput="calculateSums()"></td>
         <td><input type="number" value="${w.price}" oninput="calculateSums()"></td>
         <td class="sum-cell">${w.sum?.toFixed(2) || '0.00'}</td>
-        <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>
-      `;
+        <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
       document.getElementById('works-body').appendChild(row);
       workIndex++;
     });
@@ -563,8 +544,7 @@
         <td><input type="number" value="${p.qty}" min="1" oninput="calculateSums()"></td>
         <td><input type="number" value="${p.price}" oninput="calculateSums()"></td>
         <td class="sum-cell">${p.sum?.toFixed(2) || '0.00'}</td>
-        <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>
-      `;
+        <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
       document.getElementById('parts-body').appendChild(row);
       partIndex++;
     });
@@ -704,25 +684,13 @@
 
     Array.from(document.querySelectorAll('#works-body tr')).forEach(row => {
       const inputs = row.querySelectorAll('input');
-      const cols = [
-        claimNumber, date, company, fio, phone, role, brand, model, number, vin,
-        'Работа', '', '',
-        inputs[0].value, inputs[1].value,
-        inputs[2].value, inputs[3].value, inputs[4].value,
-        row.querySelector('.sum-cell').textContent
-      ];
+      const cols = [claimNumber, date, company, fio, phone, role, brand, model, number, vin, 'Работа', '', '', inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value, row.querySelector('.sum-cell').textContent];
       csv += cols.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',') + '\n';
     });
 
     Array.from(document.querySelectorAll('#parts-body tr')).forEach(row => {
       const inputs = row.querySelectorAll('input');
-      const cols = [
-        claimNumber, date, company, fio, phone, role, brand, model, number, vin,
-        'Запчасть',
-        inputs[0].value, inputs[1].value, inputs[2].value,
-        inputs[3].value, '', inputs[4].value,
-        row.querySelector('.sum-cell').textContent
-      ];
+      const cols = [claimNumber, date, company, fio, phone, role, brand, model, number, vin, 'Запчасть', inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, '', inputs[4].value, row.querySelector('.sum-cell').textContent];
       csv += cols.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',') + '\n';
     });
 
