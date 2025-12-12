@@ -247,42 +247,4 @@
       <button class="btn-sm" onclick="applyTemplate()">Заполнить по шаблону</button>
     </div>
 
-    <h3>Работы</h3>
-    <table id="works-table">
-      <thead>
-        <tr><th>Наименование</th><th>Сторона</th><th>Кол-во</th><th>Н/ч</th><th>Цена</th><th>Сумма</th><th></th></tr>
-      </thead>
-      <tbody id="works-body"></tbody>
-    </table>
-    <button class="btn btn-sm" onclick="addWorkRow()">➕ Добавить работу</button>
-
-    <h3>Запчасти</h3>
-    <table id="parts-table">
-      <thead>
-        <tr><th>Арт.</th><th>Наименование</th><th>Сторона</th><th>Кол-во</th><th>Цена</th><th>Сумма</th><th></th></tr>
-      </thead>
-      <tbody id="parts-body"></tbody>
-    </table>
-    <button class="btn btn-sm" onclick="addPartRow()">➕ Добавить запчасть</button>
-
-    <div style="margin-top:10px; text-align:right;">
-      <strong>Итого: <span id="total-sum">0.00</span> ₽</strong>
-    </div>
-
-    <div class="no-print" style="margin-top:15px;">
-      <button class="btn" onclick="saveAsDraft()">Сохранить черновик</button>
-      <button class="btn" style="background:#28a745;" onclick="agreeClaim()">Согласовано → CSV для 1С</button>
-      <button class="btn" onclick="printClaim()">Распечатать заявку</button>
-    </div>
-  </div>
-
-  <div id="archive-tab" class="tab-content">
-    <h2>Мои заявки</h2>
-    <div id="archive-list"></div>
-  </div>
-</div>
-
-<script>
-  // ========== SUPABASE ==========
-  const supabaseUrl = 'https://rylmxrzbxvnwjciuwweu.supabase.co';
-  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
+   
