@@ -90,3 +90,263 @@
     }
 
     table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 6px;
+      border: 1px solid var(--border);
+    }
+    thead th {
+      font-weight: 600;
+      background: #f8f9fa;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+      margin: 5px;
+    }
+    .btn-sm { padding: 4px 8px; font-size: 12px; }
+    .btn-danger { background: var(--danger); }
+    .no-print { display: none; }
+
+    @media print {
+      .no-print { display: block; }
+      body { background: white; padding: 0; }
+      .container { box-shadow: none; border: none; }
+    }
+
+    #auth-dialog {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .auth-form {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 300px;
+    }
+    .auth-form input {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<div id="auth-dialog">
+  <div class="auth-form">
+    <h3>Вход в систему</h3>
+    <input type="email" id="login-email" placeholder="Email" required />
+    <input type="password" id="login-password" placeholder="Пароль" required />
+    <button class="btn" onclick="login()">Войти</button>
+    <p style="font-size:12px; margin-top:10px;">
+      Обратитесь к администратору для получения логина/пароля.
+    </p>
+  </div>
+</div>
+
+<div class="container">
+  <div id="auth-ui" style="position: fixed; top: 10px; right: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px; z-index: 999;">
+    <div id="user-status">Загрузка...</div>
+    <button id="logout-btn" style="display:none;" onclick="logout()">Выход</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('form')">Новая заявка</button>
+    <button class="tab-btn" onclick="switchTab('archive')">Мои заявки</button>
+  </div>
+
+  <div id="form-tab" class="tab-content active">
+    <input type="hidden" id="claim-id">
+    <div class="header-info">
+      <strong>ПОСТАВЩИК:</strong> Общество с ограниченной ответственностью "СЕРВИСТРАНСАВТО"<br>
+      ИНН 7723905004, КПП 772101001, Код по ОКПО 29289257<br>
+      111674, г. Москва, вн.тер.г. муниципальный округ Некрасовка, пр-кт Защитников Москвы<br>
+      тел.: +7 999 599 00 03
+    </div>
+
+    <h3>НОВАЯ ЗАЯВКА</h3>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Госномер *</label>
+        <input type="text" id="car-number" placeholder="А123БВ77" oninput="lookupVehicle(this.value)">
+      </div>
+      <div class="form-group">
+        <label>Номер заявки</label>
+        <input type="text" id="claim-number" readonly>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>ФИО клиента *</label>
+        <input type="text" id="client-fio" placeholder="Иванов И.И." required>
+      </div>
+      <div class="form-group">
+        <label>Компания (опц.)</label>
+        <input type="text" id="client-company" placeholder="ООО Транс">
+      </div>
+      <div class="form-group">
+        <label>Телефон *</label>
+        <input type="tel" id="phone" placeholder="+7 (___) ___-__-__" required>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Марка *</label>
+        <select id="car-brand" required>
+          <option value="">Выберите</option>
+          <option value="ГАЗель Next">ГАЗель Next</option>
+          <option value="Ford Transit">Ford Transit</option>
+          <option value="Hyundai HD78">Hyundai HD78</option>
+          <option value="Peugeot Boxer">Peugeot Boxer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Модель *</label>
+        <input type="text" id="car-model" placeholder="HD78" required>
+      </div>
+      <div class="form-group">
+        <label>VIN</label>
+        <input type="text" id="vin" placeholder="X12345678901234567">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Жалоба клиента *</label>
+      <textarea id="complaint" rows="3" placeholder="Опишите проблему..." oninput="suggestTemplate(this.value)"></textarea>
+    </div>
+
+    <div id="template-suggestion" style="margin:10px 0; padding:10px; background:#e9ecef; border-radius:4px; display:none;">
+      <strong>Найден шаблон:</strong> <span id="template-title"></span>
+      <button class="btn-sm" onclick="applyTemplate()">Заполнить по шаблону</button>
+    </div>
+
+    <h3>Работы</h3>
+    <table id="works-table">
+      <thead>
+        <tr><th>Наименование</th><th>Сторона</th><th>Кол-во</th><th>Н/ч</th><th>Цена</th><th>Сумма</th><th></th></tr>
+      </thead>
+      <tbody id="works-body"></tbody>
+    </table>
+    <button class="btn btn-sm" onclick="addWorkRow()">➕ Добавить работу</button>
+
+    <h3>Запчасти</h3>
+    <table id="parts-table">
+      <thead>
+        <tr><th>Арт.</th><th>Наименование</th><th>Сторона</th><th>Кол-во</th><th>Цена</th><th>Сумма</th><th></th></tr>
+      </thead>
+      <tbody id="parts-body"></tbody>
+    </table>
+    <button class="btn btn-sm" onclick="addPartRow()">➕ Добавить запчасть</button>
+
+    <div style="margin-top:10px; text-align:right;">
+      <strong>Итого: <span id="total-sum">0.00</span> ₽</strong>
+    </div>
+
+    <div class="no-print" style="margin-top:15px;">
+      <button class="btn" onclick="saveAsDraft()">Сохранить черновик</button>
+      <button class="btn" style="background:#28a745;" onclick="agreeClaim()">Согласовано → CSV для 1С</button>
+      <button class="btn" onclick="printClaim()">Распечатать заявку</button>
+    </div>
+  </div>
+
+  <div id="archive-tab" class="tab-content">
+    <h2>Мои заявки</h2>
+    <div id="archive-list"></div>
+  </div>
+</div>
+<script>
+  // ========== SUPABASE ==========
+  const supabaseUrl = 'https://xvvhranmftqqddbplypu.supabase.co';
+  const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+  // ========== ГЛОБАЛЬНЫЕ ==========
+  let currentUser = null;
+  let currentTemplate = null;
+  let workIndex = 1, partIndex = 1;
+
+  // ========== ИНИЦИАЛИЗАЦИЯ ==========
+  document.addEventListener('DOMContentLoaded', () => {
+    const now = new Date();
+    document.getElementById('claim-number').value = `SR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*1000)).padStart(3,'0')}`;
+    
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        currentUser = data.session.user;
+        document.getElementById('user-status').textContent = `👤 ${currentUser.email}`;
+        document.getElementById('logout-btn').style.display = 'inline-block';
+        document.getElementById('auth-dialog').style.display = 'none';
+        renderArchive();
+      } else {
+        document.getElementById('auth-dialog').style.display = 'flex';
+      }
+    });
+  });
+
+  // ========== АВТОРИЗАЦИЯ ==========
+  async function login() {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      alert('❌ Ошибка: ' + error.message);
+    } else {
+      currentUser = data.user;
+      document.getElementById('auth-dialog').style.display = 'none';
+      document.getElementById('user-status').textContent = `👤 ${currentUser.email}`;
+      document.getElementById('logout-btn').style.display = 'inline-block';
+      renderArchive();
+    }
+  }
+
+  async function logout() {
+    await supabase.auth.signOut();
+    window.location.reload();
+  }
+
+  // ========== ПОИСК АВТО ==========
+  async function lookupVehicle(carNumber) {
+    if (!carNumber.trim()) return;
+    const upperNumber = carNumber.toUpperCase();
+    document.getElementById('car-number').value = upperNumber;
+
+    const { data } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('car_number', upperNumber)
+      .single();
+
+    if (data) {
+      document.getElementById('client-fio').value = data.client_fio;
+      document.getElementById('client-company').value = data.client_company || '';
+      document.getElementById('phone').value = data.phone;
+      document.getElementById('car-brand').value = data.car_brand;
+      document.getElementById('car-model').value = data.car_model;
+      document.getElementById
