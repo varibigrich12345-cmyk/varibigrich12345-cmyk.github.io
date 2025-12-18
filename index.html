@@ -1,245 +1,282 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Заявка на ремонт — ООО «СЕРВИСТРАНСАВТО»</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f8f9fa; padding: 20px; }
-    .container { max-width: 960px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .auth-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .auth-form { background: white; padding: 30px; border-radius: 8px; width: 350px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .auth-form h2 { margin-bottom: 20px; text-align: center; }
-    .auth-form input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-    .auth-form button { width: 100%; padding: 12px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; }
-    .auth-form button:hover { background: #0056b3; }
-    .auth-info { font-size: 12px; margin-top: 15px; color: #666; line-height: 1.5; }
-    .user-info { position: fixed; top: 20px; right: 20px; background: white; padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; z-index: 999; }
-    .user-info button { margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    .hidden { display: none; }
-    .error { color: #dc3545; font-size: 14px; margin-top: 10px; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; }
-    .success { color: #155724; font-size: 14px; margin-top: 10px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; }
-    h1 { text-align: center; margin-bottom: 20px; color: #333; }
-    .form-group { margin: 15px 0; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #444; }
-    .form-group input, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; }
-    .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; margin: 5px; }
-    .btn:hover { background: #0056b3; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f5f5;padding:10px}
+.hide{display:none!important}
+.app{max-width:1400px;margin:0 auto;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.header{background:#2c3e50;color:#fff;padding:15px 20px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:20px}
+.user-info{font-size:14px}
+.btn{padding:10px 20px;margin:5px;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:14px;transition:all .2s}
+.btn-primary{background:#3498db;color:#fff}
+.btn-primary:hover{background:#2980b9}
+.btn-success{background:#27ae60;color:#fff}
+.btn-success:hover{background:#229954}
+.btn-danger{background:#e74c3c;color:#fff}
+.btn-danger:hover{background:#c0392b}
+.btn-secondary{background:#95a5a6;color:#fff}
+.btn-secondary:hover{background:#7f8c8d}
+.btn-warning{background:#f39c12;color:#fff}
+.btn-warning:hover{background:#e67e22}
+.search-screen{padding:60px 20px;text-align:center}
+.search-screen h2{margin-bottom:30px;color:#2c3e50}
+.search-box{max-width:500px;margin:0 auto 40px;display:flex;gap:10px}
+.search-box input{flex:1;padding:15px;font-size:16px;border:2px solid #ddd;border-radius:4px}
+.search-results{background:#ecf0f1;padding:20px;margin:20px auto;max-width:800px;border-radius:8px;text-align:left}
+.result-item{margin:10px 0;padding:15px;background:#fff;border-radius:4px;border-left:4px solid #3498db}
+.result-item h4{margin-bottom:10px;color:#2c3e50}
+.result-item p{margin:5px 0;font-size:14px;color:#555}
+.toolbar{padding:15px 20px;background:#ecf0f1;border-bottom:1px solid #bdc3c7;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.toolbar-title{font-size:18px;font-weight:600;color:#2c3e50}
+.content{padding:20px}
+.table-container{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{padding:12px;text-align:left;border-bottom:1px solid #ecf0f1}
+th{background:#34495e;color:#fff;font-weight:600}
+tr:hover{background:#f8f9fa}
+.status{padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.status-draft{background:#ecf0f1;color:#7f8c8d}
+.status-agreed{background:#d1ecf1;color:#0c5460}
+.status-in_progress{background:#fff3cd;color:#856404}
+.status-completed{background:#d4edda;color:#155724}
+.form-container{max-width:800px;margin:20px auto;padding:20px;background:#f8f9fa;border-radius:8px}
+.form-group{margin:15px 0}
+.form-group label{display:block;margin-bottom:5px;font-weight:600;color:#2c3e50}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;font-size:14px}
+.form-group textarea{min-height:80px;resize:vertical}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;overflow-y:auto}
+.modal.show{display:flex;align-items:start;justify-content:center;padding:20px}
+.modal-content{background:#fff;border-radius:8px;max-width:900px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-header{padding:20px;border-bottom:1px solid #ecf0f1;display:flex;justify-content:space-between;align-items:center}
+.modal-body{padding:20px}
+.close{font-size:28px;font-weight:bold;cursor:pointer;color:#7f8c8d}
+.close:hover{color:#2c3e50}
+.work-item,.part-item{background:#fff;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:4px;display:flex;justify-content:space-between;align-items:center}
+.item-info{flex:1}
+@media print{.no-print{display:none!important}.print-only{display:block!important}}
+</style>
 </head>
 <body>
 
-<div id="auth-overlay" class="auth-overlay">
-  <div class="auth-form">
+<div class="app">
+  <div class="header">
+    <h1>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</h1>
+    <div class="user-info" id="userInfo"></div>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="loginScreen" class="search-screen">
     <h2>Вход в систему</h2>
-    <input type="email" id="email-input" placeholder="Email" required>
-    <input type="password" id="password-input" placeholder="Пароль" required>
-    <button id="login-button">Войти</button>
-    <div id="auth-error" class="error hidden"></div>
-    <div class="auth-info">
-      💡 Введите ваш email и пароль для входа.<br>
-      ⚠️ При проблемах обратитесь к администратору.
+    <div class="form-container">
+      <div class="form-group">
+        <input type="email" id="loginEmail" placeholder="Email">
+      </div>
+      <div class="form-group">
+        <input type="password" id="loginPassword" placeholder="Пароль">
+      </div>
+      <button class="btn btn-primary" onclick="login()">Войти</button>
+    </div>
+  </div>
+
+  <!-- Search Screen -->
+  <div id="searchScreen" class="search-screen hide">
+    <h2>Поиск по госномеру</h2>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Введите госномер (например: А123АА77)">
+      <button class="btn btn-primary" onclick="searchByCar()">Поиск</button>
+    </div>
+    <div id="searchResults"></div>
+    <button class="btn btn-secondary" onclick="showMainScreen()">К списку заявок</button>
+  </div>
+
+  <!-- Main Screen -->
+  <div id="mainScreen" class="hide">
+    <div class="toolbar">
+      <div class="toolbar-title">Заявки на ремонт</div>
+      <div>
+        <button class="btn btn-success" onclick="showClaimForm()">+ Создать заявку</button>
+        <button class="btn btn-secondary" onclick="showSearchScreen()">Поиск по госномеру</button>
+        <button class="btn btn-danger" onclick="logout()">Выход</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Номер</th>
+              <th>Дата</th>
+              <th>Госномер</th>
+              <th>Клиент</th>
+              <th>Телефон</th>
+              <th>Статус</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="claimsBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
 
-<div id="user-info" class="user-info hidden">
-  <span id="user-email"></span>
-  <button id="logout-button">Выход</button>
-</div>
+<!-- Claim Modal -->
+<div id="claimModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modalTitle">Новая заявка</h2>
+      <span class="close" onclick="closeModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="claimForm" onsubmit="saveClaim(event)">
+        <input type="hidden" id="claimId">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Госномер *</label>
+            <input type="text" id="carNumber" required>
+          </div>
+          <div class="form-group">
+            <label>Марка/Модель</label>
+            <input type="text" id="carBrand">
+          </div>
+        </div>
 
-<div class="container hidden" id="main-app">
-  <h1>Заявка на ремонт — ООО «СЕРВИСТРАНСАВТО»</h1>
-  
-  <div class="form-group">
-    <label>Госномер *</label>
-    <input type="text" id="car-number" placeholder="А123БВ77" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label>VIN</label>
+            <input type="text" id="vin">
+          </div>
+          <div class="form-group">
+            <label>Пробег (км)</label>
+            <input type="number" id="mileage">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>ФИО клиента *</label>
+            <input type="text" id="clientFio" required>
+          </div>
+          <div class="form-group">
+            <label>Компания</label>
+            <input type="text" id="clientCompany">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Телефон *</label>
+          <input type="tel" id="phone" required>
+        </div>
+
+        <div class="form-group">
+          <label>Описание проблемы</label>
+          <textarea id="complaint"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Статус</label>
+          <select id="status">
+            <option value="draft">Черновик</option>
+            <option value="agreed">Подтверждена</option>
+            <option value="in_progress">В работе</option>
+            <option value="completed">Завершена</option>
+          </select>
+        </div>
+
+        <div style="margin-top:20px">
+          <button type="submit" class="btn btn-success">Сохранить</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+          <button type="button" class="btn btn-warning" onclick="exportToCSV()" style="display:none" id="exportBtn">Экспорт CSV</button>
+          <button type="button" class="btn btn-primary" onclick="printClaim()" style="display:none" id="printBtn">Печать</button>
+        </div>
+      </form>
+    </div>
   </div>
-  
-  <div class="form-group">
-    <label>ФИО клиента *</label>
-    <input type="text" id="client-fio" placeholder="Иванов И.И." required>
-  </div>
-  
-  <div class="form-group">
-    <label>Телефон *</label>
-    <input type="tel" id="phone" placeholder="+7 (999) 999-99-99" required>
-  </div>
-  
-  <div class="form-group">
-    <label>Жалоба клиента *</label>
-    <textarea id="complaint" rows="3" placeholder="Опишите проблему..." required></textarea>
-  </div>
-  
-  <button class="btn" id="save-button">Сохранить заявку</button>
-  <div id="save-message" class="hidden"></div>
 </div>
 
 <script>
-  // ========== SUPABASE CONFIGURATION ==========
-  const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
-    const SUPABASE_ANON_KEY = '      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
-  
-  const { createClient } = supabase;
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Supabase configuration
+const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzMjU5MjksImV4cCI6MjA0OTkwMTkyOX0.qkz-YMzgfyTD_lOmWBkIlkzYCsNJLLF1tgKjkPGkKd4';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  
-  // ========== DOM ELEMENTS ==========
-  const authOverlay = document.getElementById('auth-overlay');
-  const emailInput = document.getElementById('email-input');
-  const passwordInput = document.getElementById('password-input');
-  const loginButton = document.getElementById('login-button');
-  const authError = document.getElementById('auth-error');
-  const userInfo = document.getElementById('user-info');
-  const userEmail = document.getElementById('user-email');
-  const logoutButton = document.getElementById('logout-button');
-  const mainApp = document.getElementById('main-app');
-  const saveButton = document.getElementById('save-button');
-  const saveMessage = document.getElementById('save-message');
-  
-  // ========== INITIALIZE ==========
-  async function init() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    
-    if (session?.user) {
-      currentUser = session.user;
-      showMainApp();
-    } else {
-      showAuthOverlay();
-    }
-  }
-  
-  // ========== AUTH FUNCTIONS ==========
-  async function handleLogin() {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    
-    if (!email || !password) {
-      showError('Введите email и пароль');
-      return;
-    }
-    
-    loginButton.disabled = true;
-    loginButton.textContent = 'Загрузка...';
-    hideError();
-    
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) throw error;
-      
-      currentUser = data.user;
-      showMainApp();
-    } catch (error) {
-      console.error('Login error:', error);
-      showError('Ошибка входа: ' + error.message);
-    } finally {
-      loginButton.disabled = false;
-      loginButton.textContent = 'Войти';
-    }
-  }
-  
-  async function handleLogout() {
-    await supabaseClient.auth.signOut();
-    currentUser = null;
-    showAuthOverlay();
-  }
-  
-  function showAuthOverlay() {
-    authOverlay.classList.remove('hidden');
-    mainApp.classList.add('hidden');
-    userInfo.classList.add('hidden');
-  }
-  
-  function showMainApp() {
-    authOverlay.classList.add('hidden');
-    mainApp.classList.remove('hidden');
-    userInfo.classList.remove('hidden');
-    userEmail.textContent = currentUser.email;
-  }
-  
-  function showError(message) {
-    authError.textContent = message;
-    authError.classList.remove('hidden');
-  }
-  
-  function hideError() {
-    authError.classList.add('hidden');
-  }
-  
-  // ========== SAVE CLAIM ==========
-  async function handleSave() {
-    const carNumber = document.getElementById('car-number').value.trim();
-    const clientFio = document.getElementById('client-fio').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const complaint = document.getElementById('complaint').value.trim();
-    
-    if (!carNumber || !clientFio || !phone || !complaint) {
-      showMessage('Заполните все обязательные поля', 'error');
-      return;
-    }
-    
-    saveButton.disabled = true;
-    saveButton.textContent = 'Сохранение...';
-    
-    try {
-      const { data, error } = await supabaseClient
-        .from('claims')
-        .insert({
-          car_number: carNumber,
-          client_fio: clientFio,
-          phone: phone,
-          complaint: complaint,
-          master_id: currentUser.id,
-          status: 'draft'
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      showMessage('Заявка сохранена успешно!', 'success');
-      clearForm();
-    } catch (error) {
-      console.error('Save error:', error);
-      showMessage('Ошибка сохранения: ' + error.message, 'error');
-    } finally {
-      saveButton.disabled = false;
-      saveButton.textContent = 'Сохранить заявку';
-    }
-  }
-  
-  function showMessage(message, type) {
-    saveMessage.textContent = message;
-    saveMessage.className = type;
-    saveMessage.classList.remove('hidden');
-    setTimeout(() => saveMessage.classList.add('hidden'), 5000);
-  }
-  
-  function clearForm() {
-    document.getElementById('car-number').value = '';
-    document.getElementById('client-fio').value = '';
-    document.getElementById('phone').value = '';
-    document.getElementById('complaint').value = '';
-  }
-  
-  // ========== EVENT LISTENERS ==========
-  loginButton.addEventListener('click', handleLogin);
-  logoutButton.addEventListener('click', handleLogout);
-  saveButton.addEventListener('click', handleSave);
-  
-  passwordInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleLogin();
-  });
-  
-  // ========== START APP ==========
-  init();
-</script>
+let currentUser = null;
+let currentClaim = null;
 
-</body>
-</html>
+// Auth functions
+async function login() {
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  
+  if (error) {
+    alert('Ошибка входа: ' + error.message);
+    return;
+  }
+  
+  currentUser = data.user;
+  document.getElementById('loginScreen').classList.add('hide');
+  document.getElementById('searchScreen').classList.remove('hide');
+  document.getElementById('userInfo').textContent = email;
+  
+  loadClaims();
+}
+
+function logout() {
+  supabase.auth.signOut();
+  currentUser = null;
+  document.getElementById('mainScreen').classList.add('hide');
+  document.getElementById('searchScreen').classList.add('hide');
+  document.getElementById('loginScreen').classList.remove('hide');
+}
+
+// Navigation
+function showSearchScreen() {
+  document.getElementById('mainScreen').classList.add('hide');
+  document.getElementById('searchScreen').classList.remove('hide');
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchResults').innerHTML = '';
+}
+
+function showMainScreen() {
+  document.getElementById('searchScreen').classList.add('hide');
+  document.getElementById('mainScreen').classList.remove('hide');
+  loadClaims();
+}
+
+// Search by car number
+async function searchByCar() {
+  const carNumber = document.getElementById('searchInput').value.trim().toUpperCase();
+  if (!carNumber) {
+    alert('Введите госномер');
+    return;
+  }
+  
+  const { data, error } = await supabase
+    .from('claims')
+    .select('*')
+    .ilike('car_number', `%${carNumber}%`)
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    alert('Ошибка поиска: ' + error.message);
+    return;
+  }
+  
+  displaySearchResults(data);
+}
+
+function displaySearchResults(claims) {
+  const container = document.getElementById('searchResults');
+  
+  if (!claims || claims.length === 0) {
+    container.innerHTML = '<div class="search-
