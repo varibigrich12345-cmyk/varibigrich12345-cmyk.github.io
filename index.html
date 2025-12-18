@@ -1,245 +1,898 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Заявка на ремонт — ООО «СЕРВИСТРАНСАВТО»</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f8f9fa; padding: 20px; }
-    .container { max-width: 960px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .auth-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .auth-form { background: white; padding: 30px; border-radius: 8px; width: 350px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .auth-form h2 { margin-bottom: 20px; text-align: center; }
-    .auth-form input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-    .auth-form button { width: 100%; padding: 12px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: bold; }
-    .auth-form button:hover { background: #0056b3; }
-    .auth-info { font-size: 12px; margin-top: 15px; color: #666; line-height: 1.5; }
-    .user-info { position: fixed; top: 20px; right: 20px; background: white; padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; z-index: 999; }
-    .user-info button { margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    .hidden { display: none; }
-    .error { color: #dc3545; font-size: 14px; margin-top: 10px; padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; }
-    .success { color: #155724; font-size: 14px; margin-top: 10px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; }
-    h1 { text-align: center; margin-bottom: 20px; color: #333; }
-    .form-group { margin: 15px 0; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #444; }
-    .form-group input, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; }
-    .btn { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; margin: 5px; }
-    .btn:hover { background: #0056b3; }
+    :root {
+      --primary: #007bff;
+      --danger: #dc3545;
+      --border: #ddd;
+      --bg: #fff;
+      --text: #333;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f8f9fa;
+      padding: 20px;
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: var(--bg);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      background: #e9ecef;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .header-info {
+      margin-bottom: 20px;
+      padding: 12px;
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .form-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #444;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+
+    h3 {
+      text-align: center;
+      margin: 20px 0 12px;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 6px;
+      border: 1px solid var(--border);
+    }
+    thead th {
+      font-weight: 600;
+      background: #f8f9fa;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+      margin: 5px;
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-sm { padding: 4px 8px; font-size: 12px; }
+    .btn-danger { background: var(--danger); }
+    .no-print { display: none; }
+
+    @media print {
+      .no-print { display: block; }
+      body { background: white; padding: 0; }
+      .container { box-shadow: none; border: none; }
+    }
+
+    #auth-dialog {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .auth-form {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 320px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .auth-form h3 {
+      margin-top: 0;
+    }
+    .auth-form input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .auth-form .btn {
+      width: 100%;
+      margin: 10px 0 5px;
+    }
+    .auth-info {
+      font-size: 12px;
+      margin-top: 10px;
+      color: #666;
+      line-height: 1.4;
+    }
   </style>
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
-<div id="auth-overlay" class="auth-overlay">
+<div id="auth-dialog">
   <div class="auth-form">
-    <h2>Вход в систему</h2>
-    <input type="email" id="email-input" placeholder="Email" required>
-    <input type="password" id="password-input" placeholder="Пароль" required>
-    <button id="login-button">Войти</button>
-    <div id="auth-error" class="error hidden"></div>
-    <div class="auth-info">
-      💡 Введите ваш email и пароль для входа.<br>
-      ⚠️ При проблемах обратитесь к администратору.
+    <h3>Вход в систему</h3>
+    <input type="email" id="login-email" placeholder="Email" required />
+    <input type="password" id="login-password" placeholder="Пароль (минимум 6 символов)" required />
+    <button class="btn" id="login-btn" onclick="login()">Войти</button>
+    <p class="auth-info">
+      💡 При первом входе будет автоматически создан новый аккаунт.<br>
+      ⚠️ Если возникают проблемы, обратитесь к администратору.
+    </p>
+  </div>
+</div>
+
+<div class="container">
+  <div id="auth-ui" style="position: fixed; top: 10px; right: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px; z-index: 999;">
+    <div id="user-status">Загрузка...</div>
+    <button id="logout-btn" class="btn-sm" style="display:none;" onclick="logout()">Выход</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('form')">Новая заявка</button>
+    <button class="tab-btn" onclick="switchTab('archive')">Мои заявки</button>
+  </div>
+
+  <div id="form-tab" class="tab-content active">
+    <input type="hidden" id="claim-id">
+    <div class="header-info">
+      <strong>ПОСТАВЩИК:</strong> Общество с ограниченной ответственностью "СЕРВИСТРАНСАВТО"<br>
+      ИНН 7723905004, КПП 772101001, Код по ОКПО 29289257<br>
+      111674, г. Москва, вн.тер.г. муниципальный округ Некрасовка, пр-кт Защитников Москвы<br>
+      тел.: +7 999 599 00 03
+    </div>
+
+    <h3>НОВАЯ ЗАЯВКА</h3>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Госномер *</label>
+        <input type="text" id="car-number" placeholder="А123БВ77" oninput="lookupVehicle(this.value)">
+      </div>
+      <div class="form-group">
+        <label>Номер заявки</label>
+        <input type="text" id="claim-number" readonly>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>ФИО клиента *</label>
+        <input type="text" id="client-fio" placeholder="Иванов И.И." required>
+      </div>
+      <div class="form-group">
+        <label>Компания (опц.)</label>
+        <input type="text" id="client-company" placeholder="ООО Транс">
+      </div>
+      <div class="form-group">
+        <label>Телефон *</label>
+        <input type="tel" id="phone" placeholder="+7 (___) ___-__-__" required>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Марка *</label>
+        <select id="car-brand" required>
+          <option value="">Выберите</option>
+          <option value="ГАЗель Next">ГАЗель Next</option>
+          <option value="Ford Transit">Ford Transit</option>
+          <option value="Hyundai HD78">Hyundai HD78</option>
+          <option value="Peugeot Boxer">Peugeot Boxer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Модель *</label>
+        <input type="text" id="car-model" placeholder="HD78" required>
+      </div>
+      <div class="form-group">
+        <label>VIN</label>
+        <input type="text" id="vin" placeholder="X12345678901234567">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Жалоба клиента *</label>
+      <textarea id="complaint" rows="3" placeholder="Опишите проблему..." oninput="suggestTemplate(this.value)" required></textarea>
+    </div>
+
+    <div id="template-suggestion" style="margin:10px 0; padding:10px; background:#e9ecef; border-radius:4px; display:none;">
+      <strong>Найден шаблон:</strong> <span id="template-title"></span>
+      <button class="btn-sm" onclick="applyTemplate()">Заполнить по шаблону</button>
+    </div>
+
+    <h3>Работы</h3>
+    <table id="works-table">
+      <thead>
+        <tr><th>Наименование</th><th>Сторона</th><th>Кол-во</th><th>Н/ч</th><th>Цена</th><th>Сумма</th><th></th></tr>
+      </thead>
+      <tbody id="works-body"></tbody>
+    </table>
+    <button class="btn btn-sm" onclick="addWorkRow()">➕ Добавить работу</button>
+
+    <h3>Запчасти</h3>
+    <table id="parts-table">
+      <thead>
+        <tr><th>Арт.</th><th>Наименование</th><th>Сторона</th><th>Кол-во</th><th>Цена</th><th>Сумма</th><th></th></tr>
+      </thead>
+      <tbody id="parts-body"></tbody>
+    </table>
+    <button class="btn btn-sm" onclick="addPartRow()">➕ Добавить запчасть</button>
+
+    <div style="margin-top:10px; text-align:right;">
+      <strong>Итого: <span id="total-sum">0.00</span> ₽</strong>
+    </div>
+
+    <div class="no-print" style="margin-top:15px;">
+      <button class="btn" onclick="saveAsDraft()">Сохранить черновик</button>
+      <button class="btn" style="background:#28a745;" onclick="agreeClaim()">Согласовано → CSV для 1С</button>
+      <button class="btn" onclick="printClaim()">Распечатать заявку</button>
     </div>
   </div>
-</div>
 
-<div id="user-info" class="user-info hidden">
-  <span id="user-email"></span>
-  <button id="logout-button">Выход</button>
-</div>
-
-<div class="container hidden" id="main-app">
-  <h1>Заявка на ремонт — ООО «СЕРВИСТРАНСАВТО»</h1>
-  
-  <div class="form-group">
-    <label>Госномер *</label>
-    <input type="text" id="car-number" placeholder="А123БВ77" required>
+  <div id="archive-tab" class="tab-content">
+    <h2>Мои заявки</h2>
+    <div id="archive-list"></div>
   </div>
-  
-  <div class="form-group">
-    <label>ФИО клиента *</label>
-    <input type="text" id="client-fio" placeholder="Иванов И.И." required>
-  </div>
-  
-  <div class="form-group">
-    <label>Телефон *</label>
-    <input type="tel" id="phone" placeholder="+7 (999) 999-99-99" required>
-  </div>
-  
-  <div class="form-group">
-    <label>Жалоба клиента *</label>
-    <textarea id="complaint" rows="3" placeholder="Опишите проблему..." required></textarea>
-  </div>
-  
-  <button class="btn" id="save-button">Сохранить заявку</button>
-  <div id="save-message" class="hidden"></div>
 </div>
 
 <script>
-  // ========== SUPABASE CONFIGURATION ==========
-  const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_KlIEz6IWNU5Uf-AbQdNbpw_YBK70P8l';
-  
-  const { createClient } = supabase;
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  
+  // ========== SUPABASE ==========
+      const supabaseUrl = 'https://xvvhranmftqqddbplypu.supabase.co';
+      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+  // ========== ГЛОБАЛЬНЫЕ ==========
   let currentUser = null;
-  
-  // ========== DOM ELEMENTS ==========
-  const authOverlay = document.getElementById('auth-overlay');
-  const emailInput = document.getElementById('email-input');
-  const passwordInput = document.getElementById('password-input');
-  const loginButton = document.getElementById('login-button');
-  const authError = document.getElementById('auth-error');
-  const userInfo = document.getElementById('user-info');
-  const userEmail = document.getElementById('user-email');
-  const logoutButton = document.getElementById('logout-button');
-  const mainApp = document.getElementById('main-app');
-  const saveButton = document.getElementById('save-button');
-  const saveMessage = document.getElementById('save-message');
-  
-  // ========== INITIALIZE ==========
-  async function init() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+  let currentTemplate = null;
+  let workIndex = 1, partIndex = 1;
+
+  // ========== ИНИЦИАЛИЗАЦИЯ ==========
+  document.addEventListener('DOMContentLoaded', () => {
+    generateClaimNumber();
     
-    if (session?.user) {
-      currentUser = session.user;
-      showMainApp();
-    } else {
-      showAuthOverlay();
-    }
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        currentUser = data.session.user;
+        document.getElementById('user-status').textContent = `👤 ${currentUser.email}`;
+        document.getElementById('logout-btn').style.display = 'inline-block';
+        document.getElementById('auth-dialog').style.display = 'none';
+        renderArchive();
+      } else {
+        document.getElementById('auth-dialog').style.display = 'flex';
+        document.getElementById('user-status').textContent = 'Не авторизован';
+      }
+    });
+  });
+
+  function generateClaimNumber() {
+    const now = new Date();
+    document.getElementById('claim-number').value = `SR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*1000)).padStart(3,'0')}`;
   }
-  
-  // ========== AUTH FUNCTIONS ==========
-  async function handleLogin() {
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    
+
+  // ========== АВТОРИЗАЦИЯ С АВТО-РЕГИСТРАЦИЕЙ ==========
+  async function login() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const btn = document.getElementById('login-btn');
+
     if (!email || !password) {
-      showError('Введите email и пароль');
+      alert('❌ Введите email и пароль');
       return;
     }
-    
-    loginButton.disabled = true;
-    loginButton.textContent = 'Загрузка...';
-    hideError();
-    
+
+    // Валидация email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert('❌ Введите корректный email');
+      return;
+    }
+
+    // Валидация пароля (минимум 6 символов для Supabase)
+    if (password.length < 6) {
+      alert('❌ Пароль должен содержать минимум 6 символов');
+      return;
+    }
+
+    // Блокируем кнопку
+    btn.disabled = true;
+    btn.textContent = 'Загрузка...';
+
     try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
+      // Попытка входа
+      let { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
       });
-      
-      if (error) throw error;
-      
-      currentUser = data.user;
-      showMainApp();
-    } catch (error) {
-      console.error('Login error:', error);
-      showError('Ошибка входа: ' + error.message);
+
+      if (signInError) {
+        // Если ошибка "Invalid login credentials" - пробуем регистрацию
+        if (signInError.message.includes('Invalid login') || signInError.message.includes('credentials')) {
+          console.log('Попытка регистрации нового пользователя:', email);
+          
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: window.location.origin,
+              data: {
+                full_name: email.split('@')[0]
+              }
+            }
+          });
+
+          if (signUpError) {
+            console.error('Ошибка регистрации:', signUpError);
+            alert(`❌ Ошибка регистрации: ${signUpError.message}\n\nВозможные причины:\n- Email уже используется\n- Регистрация отключена администратором\n- Проблема с настройками Supabase\n\nОбратитесь к администратору для получения доступа.`);
+            return;
+          }
+
+          // Проверяем, требуется ли подтверждение email
+          if (signUpData.user && !signUpData.session) {
+            alert('✅ Регистрация успешна!\n\n⚠️ Проверьте ваш email для подтверждения аккаунта.\nПосле подтверждения вы сможете войти в систему.');
+            return;
+          }
+
+          if (signUpData.user && signUpData.session) {
+            currentUser = signUpData.user;
+            alert('✅ Регистрация и вход выполнены успешно!');
+          }
+        } else {
+          alert(`❌ Ошибка входа: ${signInError.message}`);
+          return;
+        }
+      } else {
+        currentUser = signInData.user;
+        console.log('Вход выполнен успешно:', currentUser.email);
+      }
+
+      // Обновляем UI
+      document.getElementById('auth-dialog').style.display = 'none';
+      document.getElementById('user-status').textContent = `👤 ${currentUser.email}`;
+      document.getElementById('logout-btn').style.display = 'inline-block';
+      renderArchive();
+    } catch (err) {
+      console.error('Непредвиденная ошибка:', err);
+      alert('❌ Произошла непредвиденная ошибка. Попробуйте позже.');
     } finally {
-      loginButton.disabled = false;
-      loginButton.textContent = 'Войти';
+      btn.disabled = false;
+      btn.textContent = 'Войти';
     }
   }
-  
-  async function handleLogout() {
-    await supabaseClient.auth.signOut();
-    currentUser = null;
-    showAuthOverlay();
+
+  async function logout() {
+    await supabase.auth.signOut();
+    window.location.reload();
   }
-  
-  function showAuthOverlay() {
-    authOverlay.classList.remove('hidden');
-    mainApp.classList.add('hidden');
-    userInfo.classList.add('hidden');
+
+  // ========== ПОИСК АВТО ==========
+  async function lookupVehicle(carNumber) {
+    if (!carNumber.trim()) return;
+    const upperNumber = carNumber.toUpperCase();
+    document.getElementById('car-number').value = upperNumber;
+
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .eq('car_number', upperNumber)
+      .single();
+
+    if (data) {
+      document.getElementById('client-fio').value = data.client_fio || '';
+      document.getElementById('client-company').value = data.client_company || '';
+      document.getElementById('phone').value = data.phone || '';
+      document.getElementById('car-brand').value = data.car_brand || '';
+      document.getElementById('car-model').value = data.car_model || '';
+      document.getElementById('vin').value = data.vin || '';
+    }
   }
-  
-  function showMainApp() {
-    authOverlay.classList.add('hidden');
-    mainApp.classList.remove('hidden');
-    userInfo.classList.remove('hidden');
-    userEmail.textContent = currentUser.email;
-  }
-  
-  function showError(message) {
-    authError.textContent = message;
-    authError.classList.remove('hidden');
-  }
-  
-  function hideError() {
-    authError.classList.add('hidden');
-  }
-  
-  // ========== SAVE CLAIM ==========
-  async function handleSave() {
-    const carNumber = document.getElementById('car-number').value.trim();
-    const clientFio = document.getElementById('client-fio').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const complaint = document.getElementById('complaint').value.trim();
-    
-    if (!carNumber || !clientFio || !phone || !complaint) {
-      showMessage('Заполните все обязательные поля', 'error');
+
+  // ========== ШАБЛОНЫ ==========
+  async function suggestTemplate(complaint) {
+    if (!complaint.trim()) {
+      document.getElementById('template-suggestion').style.display = 'none';
       return;
     }
     
-    saveButton.disabled = true;
-    saveButton.textContent = 'Сохранение...';
+    const { data } = await supabase.from('templates').select('*');
+    let matched = null;
     
-    try {
-      const { data, error } = await supabaseClient
-        .from('claims')
-        .insert({
-          car_number: carNumber,
-          client_fio: clientFio,
-          phone: phone,
-          complaint: complaint,
-          master_id: currentUser.id,
-          status: 'draft'
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      showMessage('Заявка сохранена успешно!', 'success');
-      clearForm();
-    } catch (error) {
-      console.error('Save error:', error);
-      showMessage('Ошибка сохранения: ' + error.message, 'error');
-    } finally {
-      saveButton.disabled = false;
-      saveButton.textContent = 'Сохранить заявку';
+    for (const t of data || []) {
+      if (t.keywords && Array.isArray(t.keywords)) {
+        if (t.keywords.some(kw => complaint.toLowerCase().includes(kw.toLowerCase()))) {
+          matched = t;
+          break;
+        }
+      }
+    }
+    
+    const el = document.getElementById('template-suggestion');
+    if (matched) {
+      currentTemplate = matched;
+      document.getElementById('template-title').textContent = matched.title;
+      el.style.display = 'block';
+    } else {
+      el.style.display = 'none';
+      currentTemplate = null;
     }
   }
-  
-  function showMessage(message, type) {
-    saveMessage.textContent = message;
-    saveMessage.className = type;
-    saveMessage.classList.remove('hidden');
-    setTimeout(() => saveMessage.classList.add('hidden'), 5000);
+
+  function applyTemplate() {
+    if (!currentTemplate) return;
+    document.getElementById('works-body').innerHTML = '';
+    document.getElementById('parts-body').innerHTML = '';
+    workIndex = 1; partIndex = 1;
+
+    if (currentTemplate.works) {
+      try {
+        const works = typeof currentTemplate.works === 'string' ? JSON.parse(currentTemplate.works) : currentTemplate.works;
+        works.forEach(w => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><input type="text" value="${w.name || ''}"></td>
+            <td><input type="text" value="${w.side || ''}"></td>
+            <td><input type="number" value="${w.qty || 1}" min="1" oninput="calculateSums()"></td>
+            <td><input type="number" value="${w.hours || 0}" step="0.1" oninput="calculateSums()"></td>
+            <td><input type="number" value="${w.price || 0}" oninput="calculateSums()"></td>
+            <td class="sum-cell">0.00</td>
+            <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
+          document.getElementById('works-body').appendChild(row);
+          workIndex++;
+        });
+      } catch (e) { console.error('Ошибка парсинга работ:', e); }
+    }
+
+    if (currentTemplate.parts) {
+      try {
+        const parts = typeof currentTemplate.parts === 'string' ? JSON.parse(currentTemplate.parts) : currentTemplate.parts;
+        parts.forEach(p => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><input type="text" value="${p.article || ''}"></td>
+            <td><input type="text" value="${p.name || ''}"></td>
+            <td><input type="text" value="${p.side || ''}"></td>
+            <td><input type="number" value="${p.qty || 1}" min="1" oninput="calculateSums()"></td>
+            <td><input type="number" value="${p.price || 0}" oninput="calculateSums()"></td>
+            <td class="sum-cell">0.00</td>
+            <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
+          document.getElementById('parts-body').appendChild(row);
+          partIndex++;
+        });
+      } catch (e) { console.error('Ошибка парсинга запчастей:', e); }
+    }
+    calculateSums();
+    document.getElementById('template-suggestion').style.display = 'none';
   }
-  
-  function clearForm() {
+
+  // ========== ТАБЛИЦЫ ==========
+  function addWorkRow() {
+    const tbody = document.getElementById('works-body');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="text" placeholder="Работа"></td>
+      <td><input type="text" placeholder="Сторона"></td>
+      <td><input type="number" value="1" min="1" oninput="calculateSums()"></td>
+      <td><input type="number" value="0" step="0.1" oninput="calculateSums()"></td>
+      <td><input type="number" value="0" oninput="calculateSums()"></td>
+      <td class="sum-cell">0.00</td>
+      <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
+    tbody.appendChild(row); 
+    workIndex++;
+  }
+
+  function addPartRow() {
+    const tbody = document.getElementById('parts-body');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="text" placeholder="Артикул"></td>
+      <td><input type="text" placeholder="Наименование"></td>
+      <td><input type="text" placeholder="Сторона"></td>
+      <td><input type="number" value="1" min="1" oninput="calculateSums()"></td>
+      <td><input type="number" value="0" oninput="calculateSums()"></td>
+      <td class="sum-cell">0.00</td>
+      <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
+    tbody.appendChild(row); 
+    partIndex++;
+  }
+
+  function deleteRow(btn) { 
+    btn.closest('tr').remove(); 
+    calculateSums(); 
+  }
+
+  function calculateSums() {
+    let total = 0;
+    
+    Array.from(document.querySelectorAll('#works-body tr')).forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const qty = parseFloat(inputs[2]?.value) || 0;
+      const price = parseFloat(inputs[4]?.value) || 0;
+      const sum = qty * price;
+      row.querySelector('.sum-cell').textContent = sum.toFixed(2);
+      total += sum;
+    });
+    
+    Array.from(document.querySelectorAll('#parts-body tr')).forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const qty = parseFloat(inputs[3]?.value) || 0;
+      const price = parseFloat(inputs[4]?.value) || 0;
+      const sum = qty * price;
+      row.querySelector('.sum-cell').textContent = sum.toFixed(2);
+      total += sum;
+    });
+    
+    document.getElementById('total-sum').textContent = total.toFixed(2);
+  }
+
+  // ========== НАВИГАЦИЯ ==========
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+    document.getElementById(`${tab}-tab`).classList.add('active');
+    document.querySelector(`.tab-btn:nth-child(${tab === 'form' ? 1 : 2})`).classList.add('active');
+    if (tab === 'archive') renderArchive();
+  }
+
+  // ========== АРХИВ ==========
+  async function renderArchive() {
+    if (!currentUser) return;
+    
+    const { data, error } = await supabase
+      .from('claims')
+      .select('*')
+      .eq('master_id', currentUser.id)
+      .order('created_at', { ascending: false });
+
+    const el = document.getElementById('archive-list');
+    
+    if (error) {
+      el.innerHTML = `<p style="color:red;">Ошибка загрузки: ${error.message}</p>`;
+      return;
+    }
+    
+    el.innerHTML = (data?.length ? data.map(c => `
+      <div style="padding:12px;border:1px solid #ddd;margin:8px 0;border-radius:6px;background:#fafafa;">
+        <strong>№${c.number}</strong> — ${c.client_fio} (${c.car_number})<br>
+        <small>Дата: ${new Date(c.created_at).toLocaleString('ru-RU')}</small><br>
+        Статус: ${c.status === 'agreed' ? '✅ Согласовано' : '📝 Черновик'}<br>
+        <button class="btn-sm" onclick="loadClaim('${c.id}')">Открыть</button>
+      </div>`).join('') : '<p>Заявок пока нет.</p>');
+  }
+
+  async function loadClaim(id) {
+    const { data, error } = await supabase.from('claims').select('*').eq('id', id).single();
+    if (error || !data) {
+      alert('❌ Ошибка загрузки заявки');
+      return;
+    }
+
+    document.getElementById('claim-id').value = data.id;
+    document.getElementById('claim-number').value = data.number;
+    document.getElementById('car-number').value = data.car_number;
+    document.getElementById('client-fio').value = data.client_fio;
+    document.getElementById('client-company').value = data.client_company || '';
+    document.getElementById('phone').value = data.phone;
+    document.getElementById('car-brand').value = data.car_brand;
+    document.getElementById('car-model').value = data.car_model;
+    document.getElementById('vin').value = data.vin || '';
+    document.getElementById('complaint').value = data.complaint;
+
+    document.getElementById('works-body').innerHTML = '';
+    document.getElementById('parts-body').innerHTML = '';
+    workIndex = 1; partIndex = 1;
+
+    const { data: works } = await supabase.from('works').select('*').eq('claim_id', id);
+    works?.forEach(w => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" value="${w.name}"></td>
+        <td><input type="text" value="${w.side || ''}"></td>
+        <td><input type="number" value="${w.qty}" min="1" oninput="calculateSums()"></td>
+        <td><input type="number" value="${w.hours || 0}" step="0.1" oninput="calculateSums()"></td>
+        <td><input type="number" value="${w.price}" oninput="calculateSums()"></td>
+        <td class="sum-cell">${w.sum?.toFixed(2) || '0.00'}</td>
+        <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
+      document.getElementById('works-body').appendChild(row);
+      workIndex++;
+    });
+
+    const { data: parts } = await supabase.from('parts').select('*').eq('claim_id', id);
+    parts?.forEach(p => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" value="${p.article || ''}"></td>
+        <td><input type="text" value="${p.name}"></td>
+        <td><input type="text" value="${p.side || ''}"></td>
+        <td><input type="number" value="${p.qty}" min="1" oninput="calculateSums()"></td>
+        <td><input type="number" value="${p.price}" oninput="calculateSums()"></td>
+        <td class="sum-cell">${p.sum?.toFixed(2) || '0.00'}</td>
+        <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
+      document.getElementById('parts-body').appendChild(row);
+      partIndex++;
+    });
+
+    calculateSums();
+    switchTab('form');
+  }
+
+  // ========== СОХРАНЕНИЕ ==========
+  async function saveAsDraft() {
+    if (!validateForm()) return;
+    const data = collectClaimData('draft');
+    const id = document.getElementById('claim-id').value;
+    
+    let claimId;
+    if (id) {
+      const { error } = await supabase.from('claims').update(data).eq('id', id);
+      if (error) {
+        alert('❌ Ошибка сохранения: ' + error.message);
+        return;
+      }
+      claimId = id;
+    } else {
+      const { data: newClaim, error } = await supabase.from('claims').insert(data).select('id').single();
+      if (error) {
+        alert('❌ Ошибка сохранения: ' + error.message);
+        return;
+      }
+      claimId = newClaim.id;
+    }
+    
+    await saveWorksParts(claimId);
+    alert('✅ Черновик сохранён!');
+    resetForm();
+  }
+
+  async function agreeClaim() {
+    if (!validateForm()) return;
+    const data = collectClaimData('agreed');
+    const id = document.getElementById('claim-id').value;
+    
+    let claimId;
+    if (id) {
+      const { error } = await supabase.from('claims').update(data).eq('id', id);
+      if (error) { 
+        alert('❌ Ошибка: ' + error.message); 
+        return; 
+      }
+      claimId = id;
+    } else {
+      const { data: newClaim, error } = await supabase.from('claims').insert(data).select('id').single();
+      if (error) { 
+        alert('❌ Ошибка: ' + error.message); 
+        return; 
+      }
+      claimId = newClaim.id;
+    }
+    
+    await saveWorksParts(claimId);
+    generateCSV(claimId);
+    alert('✅ Заявка согласована! CSV файл скачан.');
+    resetForm();
+  }
+
+  function collectClaimData(status) {
+    return {
+      number: document.getElementById('claim-number').value,
+      status,
+      client_fio: document.getElementById('client-fio').value,
+      client_company: document.getElementById('client-company').value || null,
+      phone: document.getElementById('phone').value,
+      car_number: document.getElementById('car-number').value,
+      car_brand: document.getElementById('car-brand').value,
+      car_model: document.getElementById('car-model').value,
+      vin: document.getElementById('vin').value || null,
+      complaint: document.getElementById('complaint').value,
+      master_id: currentUser.id
+    };
+  }
+
+  async function saveWorksParts(claimId) {
+    // Удаляем старые записи
+    await supabase.from('works').delete().eq('claim_id', claimId);
+    await supabase.from('parts').delete().eq('claim_id', claimId);
+    
+    const worksData = [];
+    Array.from(document.querySelectorAll('#works-body tr')).forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const qty = parseInt(inputs[2].value) || 1;
+      const price = parseFloat(inputs[4].value) || 0;
+      worksData.push({
+        claim_id: claimId,
+        name: inputs[0].value,
+        side: inputs[1].value || null,
+        qty: qty,
+        hours: parseFloat(inputs[3].value) || 0,
+        price: price,
+        sum: qty * price
+      });
+    });
+    
+    const partsData = [];
+    Array.from(document.querySelectorAll('#parts-body tr')).forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const qty = parseInt(inputs[3].value) || 1;
+      const price = parseFloat(inputs[4].value) || 0;
+      partsData.push({
+        claim_id: claimId,
+        article: inputs[0].value || null,
+        name: inputs[1].value,
+        side: inputs[2].value || null,
+        qty: qty,
+        price: price,
+        sum: qty * price
+      });
+    });
+    
+    if (worksData.length) await supabase.from('works').insert(worksData);
+    if (partsData.length) await supabase.from('parts').insert(partsData);
+  }
+
+  function validateForm() {
+    const required = ['client-fio', 'phone', 'car-brand', 'car-model', 'car-number', 'complaint'];
+    for (const id of required) {
+      if (!document.getElementById(id).value.trim()) {
+        alert('❌ Заполните все обязательные поля (отмечены *)');
+        document.getElementById(id).focus();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function resetForm() {
+    document.getElementById('claim-id').value = '';
+    generateClaimNumber();
     document.getElementById('car-number').value = '';
     document.getElementById('client-fio').value = '';
+    document.getElementById('client-company').value = '';
     document.getElementById('phone').value = '';
+    document.getElementById('car-brand').value = '';
+    document.getElementById('car-model').value = '';
+    document.getElementById('vin').value = '';
     document.getElementById('complaint').value = '';
+    document.getElementById('works-body').innerHTML = '';
+    document.getElementById('parts-body').innerHTML = '';
+    workIndex = 1; partIndex = 1;
+    document.getElementById('total-sum').textContent = '0.00';
+    document.getElementById('template-suggestion').style.display = 'none';
   }
-  
-  // ========== EVENT LISTENERS ==========
-  loginButton.addEventListener('click', handleLogin);
-  logoutButton.addEventListener('click', handleLogout);
-  saveButton.addEventListener('click', handleSave);
-  
-  passwordInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleLogin();
+
+  // ========== ЭКСПОРТ ==========
+  function generateCSV(claimId) {
+    let csv = 'Номер_заявки,Дата,Компания,ФИО,Телефон,Роль,Марка,Модель,Госномер,VIN,Тип_строки,Артикул,Наименование,Сторона,Количество,Нормочасы,Цена,Сумма\n';
+    
+    const claimNumber = document.getElementById('claim-number').value;
+    const date = new Date().toISOString().split('T')[0];
+    const company = document.getElementById('client-company').value || '';
+    const fio = document.getElementById('client-fio').value;
+    const phone = document.getElementById('phone').value;
+    const role = company ? 'Компания' : 'Физлицо';
+    const brand = document.getElementById('car-brand').value;
+    const model = document.getElementById('car-model').value;
+    const number = document.getElementById('car-number').value;
+    const vin = document.getElementById('vin').value || '';
+
+    Array.from(document.querySelectorAll('#works-body tr')).forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const cols = [
+        claimNumber, date, company, fio, phone, role, brand, model, number, vin,
+        'Работа', '', inputs[0].value, inputs[1].value, inputs[2].value, 
+        inputs[3].value, inputs[4].value, row.querySelector('.sum-cell').textContent
+      ];
+      csv += cols.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',') + '\n';
+    });
+
+    Array.from(document.querySelectorAll('#parts-body tr')).forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const cols = [
+        claimNumber, date, company, fio, phone, role, brand, model, number, vin,
+        'Запчасть', inputs[0].value, inputs[1].value, inputs[2].value, 
+        inputs[3].value, '', inputs[4].value, row.querySelector('.sum-cell').textContent
+      ];
+      csv += cols.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',') + '\n';
+    });
+
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `заявка-${claimNumber}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function printClaim() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(16);
+    doc.text('Заявка на ремонт — ООО «СЕРВИСТРАНСАВТО»', 14, 20);
+    doc.setFontSize(12);
+    doc.text(`№ ${document.getElementById('claim-number').value}`, 14, 30);
+    doc.text(`Клиент: ${document.getElementById('client-fio').value}`, 14, 40);
+    doc.text(`Авто: ${document.getElementById('car-brand').value} ${document.getElementById('car-model').value} (${document.getElementById('car-number').value})`, 14, 50);
+    doc.text(`Жалоба: ${document.getElementById('complaint').value}`, 14, 60);
+    doc.text(`Итого: ${document.getElementById('total-sum').textContent} ₽`, 14, 70);
+    
+    doc.save(`заявка-${document.getElementById('claim-number').value}.pdf`);
+  }
+
+  // Обработка Enter в форме авторизации
+  document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && document.getElementById('auth-dialog').style.display !== 'none') {
+      login();
+    }
   });
-  
-  // ========== START APP ==========
-  init();
 </script>
 
 </body>
