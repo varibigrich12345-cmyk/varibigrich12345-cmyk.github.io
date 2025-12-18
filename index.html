@@ -6,65 +6,332 @@
 <title>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:#f5f5f5;padding:10px}
-.hide{display:none!important}
-.app{max-width:1400px;margin:0 auto;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.header{background:#2c3e50;color:#fff;padding:15px 20px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center}
-.header h1{font-size:20px}
-.user-info{font-size:14px}
-.btn{padding:10px 20px;margin:5px;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:14px;transition:all .2s}
-.btn-primary{background:#3498db;color:#fff}
-.btn-primary:hover{background:#2980b9}
-.btn-success{background:#27ae60;color:#fff}
-.btn-success:hover{background:#229954}
-.btn-danger{background:#e74c3c;color:#fff}
-.btn-danger:hover{background:#c0392b}
-.btn-secondary{background:#95a5a6;color:#fff}
-.btn-secondary:hover{background:#7f8c8d}
-.btn-warning{background:#f39c12;color:#fff}
-.btn-warning:hover{background:#e67e22}
-.search-screen{padding:60px 20px;text-align:center}
-.search-screen h2{margin-bottom:30px;color:#2c3e50}
-.search-box{max-width:500px;margin:0 auto 40px;display:flex;gap:10px}
-.search-box input{flex:1;padding:15px;font-size:16px;border:2px solid #ddd;border-radius:4px}
-.search-results{background:#ecf0f1;padding:20px;margin:20px auto;max-width:800px;border-radius:8px;text-align:left}
-.result-item{margin:10px 0;padding:15px;background:#fff;border-radius:4px;border-left:4px solid #3498db}
-.result-item h4{margin-bottom:10px;color:#2c3e50}
-.result-item p{margin:5px 0;font-size:14px;color:#555}
-.toolbar{padding:15px 20px;background:#ecf0f1;border-bottom:1px solid #bdc3c7;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
-.toolbar-title{font-size:18px;font-weight:600;color:#2c3e50}
-.content{padding:20px}
-.table-container{overflow-x:auto}
-table{width:100%;border-collapse:collapse;margin-top:20px}
-th,td{padding:12px;text-align:left;border-bottom:1px solid #ecf0f1}
-th{background:#34495e;color:#fff;font-weight:600}
-tr:hover{background:#f8f9fa}
-.status{padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600}
-.status-draft{background:#ecf0f1;color:#7f8c8d}
-.status-agreed{background:#d1ecf1;color:#0c5460}
-.status-in_progress{background:#fff3cd;color:#856404}
-.status-completed{background:#d4edda;color:#155724}
-.form-container{max-width:800px;margin:20px auto;padding:20px;background:#f8f9fa;border-radius:8px}
-.form-group{margin:15px 0}
-.form-group label{display:block;margin-bottom:5px;font-weight:600;color:#2c3e50}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;font-size:14px}
-.form-group textarea{min-height:80px;resize:vertical}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px}
-.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;overflow-y:auto}
-.modal.show{display:flex;align-items:start;justify-content:center;padding:20px}
-.modal-content{background:#fff;border-radius:8px;max-width:900px;width:100%;max-height:90vh;overflow-y:auto}
-.modal-header{padding:20px;border-bottom:1px solid #ecf0f1;display:flex;justify-content:space-between;align-items:center}
-.modal-body{padding:20px}
-.close{font-size:28px;font-weight:bold;cursor:pointer;color:#7f8c8d}
-.close:hover{color:#2c3e50}
-.work-item,.part-item{background:#fff;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:4px;display:flex;justify-content:space-between;align-items:center}
-.item-info{flex:1}
-@media print{.no-print{display:none!important}.print-only{display:block!important}}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f5f5f5;
+  padding: 10px;
+}
+
+.hide {
+  display: none !important;
+}
+
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header {
+  background: #2c3e50;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  font-size: 20px;
+}
+
+.user-info {
+  font-size: 14px;
+}
+
+.btn {
+  padding: 10px 20px;
+  margin: 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2980b9;
+}
+
+.btn-success {
+  background: #27ae60;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #229954;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}
+
+.btn-secondary {
+  background: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #7f8c8d;
+}
+
+.btn-warning {
+  background: #f39c12;
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #e67e22;
+}
+
+.search-screen {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.search-screen h2 {
+  margin-bottom: 30px;
+  color: #2c3e50;
+}
+
+.search-box {
+  max-width: 500px;
+  margin: 0 auto 40px;
+  display: flex;
+  gap: 10px;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 15px;
+  font-size: 16px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+}
+
+.search-results {
+  background: #ecf0f1;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 800px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.result-item {
+  margin: 10px 0;
+  padding: 15px;
+  background: white;
+  border-radius: 4px;
+  border-left: 4px solid #3498db;
+}
+
+.result-item h4 {
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
+
+.result-item p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.toolbar {
+  padding: 15px 20px;
+  background: #ecf0f1;
+  border-bottom: 1px solid #bdc3c7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.toolbar-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.content {
+  padding: 20px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+th {
+  background: #34495e;
+  color: white;
+  font-weight: 600;
+}
+
+tr:hover {
+  background: #f8f9fa;
+}
+
+.status {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-draft {
+  background: #ecf0f1;
+  color: #7f8c8d;
+}
+
+.status-agreed {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-in_progress {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.form-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.form-group {
+  margin: 15px 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.modal.show {
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #ecf0f1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.close {
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #7f8c8d;
+}
+
+.close:hover {
+  color: #2c3e50;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
 </style>
 </head>
 <body>
-
 <div class="app">
   <div class="header">
     <h1>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</h1>
@@ -216,7 +483,10 @@ async function login() {
   const email = document.getElementById('loginEmail').value;
   const password = document.getElementById('loginPassword').value;
   
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ 
+    email, 
+    password 
+  });
   
   if (error) {
     alert('Ошибка входа: ' + error.message);
@@ -256,6 +526,7 @@ function showMainScreen() {
 // Search by car number
 async function searchByCar() {
   const carNumber = document.getElementById('searchInput').value.trim().toUpperCase();
+  
   if (!carNumber) {
     alert('Введите госномер');
     return;
@@ -279,4 +550,325 @@ function displaySearchResults(claims) {
   const container = document.getElementById('searchResults');
   
   if (!claims || claims.length === 0) {
-    container.innerHTML = '<div class="search-
+    container.innerHTML = '<div class="search-results"><p style="text-align:center;color:#7f8c8d">Заявки не найдены</p></div>';
+    return;
+  }
+  
+  let html = '<div class="search-results">';
+  
+  claims.forEach(claim => {
+    const date = new Date(claim.created_at).toLocaleDateString('ru-RU');
+    html += `
+      <div class="result-item">
+        <h4>Заявка ${claim.claim_number || '#' + claim.id}</h4>
+        <p><strong>Дата:</strong> ${date}</p>
+        <p><strong>Госномер:</strong> ${claim.car_number}</p>
+        <p><strong>Клиент:</strong> ${claim.client_fio}</p>
+        <p><strong>Телефон:</strong> ${claim.phone}</p>
+        <p><strong>Статус:</strong> <span class="status status-${claim.status}">${getStatusText(claim.status)}</span></p>
+        <button class="btn btn-primary" onclick="editClaim(${claim.id})">Открыть</button>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Claims table
+async function loadClaims() {
+  const { data, error } = await supabase
+    .from('claims')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    alert('Ошибка загрузки: ' + error.message);
+    return;
+  }
+  
+  displayClaimsTable(data);
+}
+
+function displayClaimsTable(claims) {
+  const tbody = document.getElementById('claimsBody');
+  
+  if (!claims || claims.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#7f8c8d">Нет заявок</td></tr>';
+    return;
+  }
+  
+  let html = '';
+  
+  claims.forEach(claim => {
+    const date = new Date(claim.created_at).toLocaleDateString('ru-RU');
+    html += `
+      <tr>
+        <td>${claim.claim_number || '#' + claim.id}</td>
+        <td>${date}</td>
+        <td>${claim.car_number}</td>
+        <td>${claim.client_fio}</td>
+        <td>${claim.phone}</td>
+        <td><span class="status status-${claim.status}">${getStatusText(claim.status)}</span></td>
+        <td>
+          <button class="btn btn-primary" style="padding:5px 10px;font-size:12px" onclick="editClaim(${claim.id})">Открыть</button>
+          <button class="btn btn-danger" style="padding:5px 10px;font-size:12px" onclick="deleteClaim(${claim.id})">Удалить</button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  tbody.innerHTML = html;
+}
+
+// Modal functions
+function showClaimForm() {
+  currentClaim = null;
+  document.getElementById('modalTitle').textContent = 'Новая заявка';
+  document.getElementById('claimForm').reset();
+  document.getElementById('claimId').value = '';
+  document.getElementById('exportBtn').style.display = 'none';
+  document.getElementById('printBtn').style.display = 'none';
+  document.getElementById('claimModal').classList.add('show');
+}
+
+async function editClaim(id) {
+  const { data, error } = await supabase
+    .from('claims')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error) {
+    alert('Ошибка загрузки заявки: ' + error.message);
+    return;
+  }
+  
+  currentClaim = data;
+  
+  document.getElementById('modalTitle').textContent = 'Редактировать заявку';
+  document.getElementById('claimId').value = data.id;
+  document.getElementById('carNumber').value = data.car_number || '';
+  document.getElementById('carBrand').value = data.car_brand || '';
+  document.getElementById('vin').value = data.vin || '';
+  document.getElementById('mileage').value = data.mileage || '';
+  document.getElementById('clientFio').value = data.client_fio || '';
+  document.getElementById('clientCompany').value = data.client_company || '';
+  document.getElementById('phone').value = data.phone || '';
+  document.getElementById('complaint').value = data.complaint || '';
+  document.getElementById('status').value = data.status || 'draft';
+  
+  document.getElementById('exportBtn').style.display = 'inline-block';
+  document.getElementById('printBtn').style.display = 'inline-block';
+  
+  document.getElementById('claimModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('claimModal').classList.remove('show');
+  currentClaim = null;
+}
+
+async function saveClaim(event) {
+  event.preventDefault();
+  
+  const claimData = {
+    car_number: document.getElementById('carNumber').value.toUpperCase(),
+    car_brand: document.getElementById('carBrand').value,
+    vin: document.getElementById('vin').value,
+    mileage: document.getElementById('mileage').value || null,
+    client_fio: document.getElementById('clientFio').value,
+    client_company: document.getElementById('clientCompany').value,
+    phone: document.getElementById('phone').value,
+    complaint: document.getElementById('complaint').value,
+    status: document.getElementById('status').value,
+    user_id: currentUser.id
+  };
+  
+  const claimId = document.getElementById('claimId').value;
+  
+  let result;
+  if (claimId) {
+    // Update existing claim
+    result = await supabase
+      .from('claims')
+      .update(claimData)
+      .eq('id', claimId);
+  } else {
+    // Create new claim with auto-generated number
+    const { data: lastClaim } = await supabase
+      .from('claims')
+      .select('claim_number')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    let nextNumber = 1;
+    if (lastClaim && lastClaim.claim_number) {
+      const match = lastClaim.claim_number.match(/\d+$/);
+      if (match) {
+        nextNumber = parseInt(match[0]) + 1;
+      }
+    }
+    
+    const year = new Date().getFullYear();
+    claimData.claim_number = `СТА-${year}-${String(nextNumber).padStart(3, '0')}`;
+    
+    result = await supabase
+      .from('claims')
+      .insert([claimData]);
+  }
+  
+  if (result.error) {
+    alert('Ошибка сохранения: ' + result.error.message);
+    return;
+  }
+  
+  alert('Заявка успешно сохранена');
+  closeModal();
+  loadClaims();
+  showMainScreen();
+}
+
+async function deleteClaim(id) {
+  if (!confirm('Вы уверены, что хотите удалить эту заявку?')) {
+    return;
+  }
+  
+  const { error } = await supabase
+    .from('claims')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    alert('Ошибка удаления: ' + error.message);
+    return;
+  }
+  
+  alert('Заявка удалена');
+  loadClaims();
+}
+// Helper functions
+function getStatusText(status) {
+  const statusMap = {
+    'draft': 'Черновик',
+    'agreed': 'Подтверждена',
+    'in_progress': 'В работе',
+    'completed': 'Завершена'
+  };
+  return statusMap[status] || status;
+}
+
+// CSV Export
+function exportToCSV() {
+  if (!currentClaim) return;
+  
+  const date = new Date(currentClaim.created_at).toLocaleDateString('ru-RU').replace(/\./g, '.');
+  const filename = `Заявка_${currentClaim.claim_number}_${date}.csv`;
+  
+  // Prepare CSV content with UTF-8 BOM for Excel
+  let csv = '\uFEFF'; // BOM for UTF-8
+  csv += 'Поле,Значение\n';
+  csv += `"Номер заявки","${currentClaim.claim_number || ''}"\n`;
+  csv += `"Дата создания","${date}"\n`;
+  csv += `"Госномер","${currentClaim.car_number || ''}"\n`;
+  csv += `"Марка/Модель","${currentClaim.car_brand || ''}"\n`;
+  csv += `"VIN","${currentClaim.vin || ''}"\n`;
+  csv += `"Пробег","${currentClaim.mileage || ''}"\n`;
+  csv += `"ФИО клиента","${currentClaim.client_fio || ''}"\n`;
+  csv += `"Компания","${currentClaim.client_company || ''}"\n`;
+  csv += `"Телефон","${currentClaim.phone || ''}"\n`;
+  csv += `"Жалоба","${(currentClaim.complaint || '').replace(/"/g, '""')}"\n`;
+  csv += `"Статус","${getStatusText(currentClaim.status)}"\n`;
+  
+  // Create download link
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.display = 'none';
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  alert('CSV файл сохранен: ' + filename);
+}
+
+// Print function
+function printClaim() {
+  if (!currentClaim) return;
+  
+  const date = new Date(currentClaim.created_at).toLocaleDateString('ru-RU');
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Заявка ${currentClaim.claim_number}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { text-align: center; color: #2c3e50; }
+        .info { margin: 20px 0; }
+        .info-row { margin: 10px 0; padding: 5px; border-bottom: 1px solid #ddd; }
+        .label { font-weight: bold; display: inline-block; width: 200px; }
+        .value { display: inline-block; }
+        @media print {
+          button { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>ООО «СЕРВИСТРАНСАВТО»</h1>
+      <h2 style="text-align:center">Заявка на ремонт № ${currentClaim.claim_number}</h2>
+      <div class="info">
+        <div class="info-row"><span class="label">Дата создания:</span><span class="value">${date}</span></div>
+        <div class="info-row"><span class="label">Госномер:</span><span class="value">${currentClaim.car_number || '-'}</span></div>
+        <div class="info-row"><span class="label">Марка/Модель:</span><span class="value">${currentClaim.car_brand || '-'}</span></div>
+        <div class="info-row"><span class="label">VIN:</span><span class="value">${currentClaim.vin || '-'}</span></div>
+        <div class="info-row"><span class="label">Пробег:</span><span class="value">${currentClaim.mileage || '-'} км</span></div>
+        <div class="info-row"><span class="label">ФИО клиента:</span><span class="value">${currentClaim.client_fio || '-'}</span></div>
+        <div class="info-row"><span class="label">Компания:</span><span class="value">${currentClaim.client_company || '-'}</span></div>
+        <div class="info-row"><span class="label">Телефон:</span><span class="value">${currentClaim.phone || '-'}</span></div>
+        <div class="info-row"><span class="label">Описание проблемы:</span><span class="value">${currentClaim.complaint || '-'}</span></div>
+        <div class="info-row"><span class="label">Статус:</span><span class="value">${getStatusText(currentClaim.status)}</span></div>
+      </div>
+      <br><br>
+      <div style="margin-top:50px">
+        <p>Мастер-приемщик: _________________ </p>
+        <p>Подпись клиента: _________________ </p>
+      </div>
+      <button onclick="window.print()" style="margin-top:20px;padding:10px 20px;background:#3498db;color:white;border:none;border-radius:4px;cursor:pointer">Печать</button>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+// Auto-login check on page load
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    currentUser = session.user;
+    document.getElementById('loginScreen').classList.add('hide');
+    document.getElementById('searchScreen').classList.remove('hide');
+    document.getElementById('userInfo').textContent = session.user.email;
+  }
+});
+
+// Check for existing session on page load
+(async function checkSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    document.getElementById('loginScreen').classList.add('hide');
+    document.getElementById('searchScreen').classList.remove('hide');
+    document.getElementById('userInfo').textContent = session.user.email;
+  }
+})();
+</script>
+</body>
+</html>
