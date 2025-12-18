@@ -74,11 +74,12 @@
       margin-bottom: 4px;
       color: #444;
     }
-    .form-group input, .form-group select {
+    .form-group input, .form-group select, .form-group textarea {
       width: 100%;
       padding: 8px;
       border: 1px solid #ddd;
       border-radius: 4px;
+      font-family: inherit;
     }
 
     h3 {
@@ -116,6 +117,10 @@
       font-weight: bold;
       margin: 5px;
     }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
     .btn-sm { padding: 4px 8px; font-size: 12px; }
     .btn-danger { background: var(--danger); }
     .no-print { display: none; }
@@ -139,14 +144,29 @@
       background: white;
       padding: 20px;
       border-radius: 8px;
-      width: 300px;
+      width: 320px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .auth-form h3 {
+      margin-top: 0;
     }
     .auth-form input {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       margin: 8px 0;
       border: 1px solid #ddd;
       border-radius: 4px;
+      font-size: 14px;
+    }
+    .auth-form .btn {
+      width: 100%;
+      margin: 10px 0 5px;
+    }
+    .auth-info {
+      font-size: 12px;
+      margin-top: 10px;
+      color: #666;
+      line-height: 1.4;
     }
   </style>
 
@@ -160,10 +180,11 @@
   <div class="auth-form">
     <h3>Вход в систему</h3>
     <input type="email" id="login-email" placeholder="Email" required />
-    <input type="password" id="login-password" placeholder="Пароль" required />
-    <button class="btn" onclick="login()">Войти</button>
-    <p style="font-size:12px; margin-top:10px;">
-      Обратитесь к администратору для получения логина/пароля.
+    <input type="password" id="login-password" placeholder="Пароль (минимум 6 символов)" required />
+    <button class="btn" id="login-btn" onclick="login()">Войти</button>
+    <p class="auth-info">
+      💡 При первом входе будет автоматически создан новый аккаунт.<br>
+      ⚠️ Если возникают проблемы, обратитесь к администратору.
     </p>
   </div>
 </div>
@@ -171,7 +192,7 @@
 <div class="container">
   <div id="auth-ui" style="position: fixed; top: 10px; right: 10px; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px; z-index: 999;">
     <div id="user-status">Загрузка...</div>
-    <button id="logout-btn" style="display:none;" onclick="logout()">Выход</button>
+    <button id="logout-btn" class="btn-sm" style="display:none;" onclick="logout()">Выход</button>
   </div>
 
   <div class="tabs">
@@ -239,7 +260,7 @@
 
     <div class="form-group">
       <label>Жалоба клиента *</label>
-      <textarea id="complaint" rows="3" placeholder="Опишите проблему..." oninput="suggestTemplate(this.value)"></textarea>
+      <textarea id="complaint" rows="3" placeholder="Опишите проблему..." oninput="suggestTemplate(this.value)" required></textarea>
     </div>
 
     <div id="template-suggestion" style="margin:10px 0; padding:10px; background:#e9ecef; border-radius:4px; display:none;">
@@ -295,8 +316,7 @@
 
   // ========== ИНИЦИАЛИЗАЦИЯ ==========
   document.addEventListener('DOMContentLoaded', () => {
-    const now = new Date();
-    document.getElementById('claim-number').value = `SR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*1000)).padStart(3,'0')}`;
+    generateClaimNumber();
     
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
@@ -307,49 +327,104 @@
         renderArchive();
       } else {
         document.getElementById('auth-dialog').style.display = 'flex';
+        document.getElementById('user-status').textContent = 'Не авторизован';
       }
     });
   });
 
+  function generateClaimNumber() {
+    const now = new Date();
+    document.getElementById('claim-number').value = `SR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*1000)).padStart(3,'0')}`;
+  }
+
   // ========== АВТОРИЗАЦИЯ С АВТО-РЕГИСТРАЦИЕЙ ==========
   async function login() {
-    const email = document.getElementById('login-email').value;
+    const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
+    const btn = document.getElementById('login-btn');
 
     if (!email || !password) {
-      alert('Введите email и пароль');
+      alert('❌ Введите email и пароль');
       return;
     }
 
-    // Сначала пробуем войти
-    let { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      // Если пользователя нет — регистрируем
-      console.log('Регистрация нового пользователя:', email);
-      const {  signUpData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (signUpError) {
-        alert('❌ Ошибка: ' + signUpError.message);
-        return;
-      }
-
-      if (signUpData.user) {
-        currentUser = signUpData.user;
-        alert('✅ Пользователь создан. Вход выполнен.');
-      }
-    } else {
-      currentUser = data.user;
+    // Валидация email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert('❌ Введите корректный email');
+      return;
     }
 
-    // Обновляем UI
-    document.getElementById('auth-dialog').style.display = 'none';
-    document.getElementById('user-status').textContent = `👤 ${currentUser.email}`;
-    document.getElementById('logout-btn').style.display = 'inline-block';
-    renderArchive();
+    // Валидация пароля (минимум 6 символов для Supabase)
+    if (password.length < 6) {
+      alert('❌ Пароль должен содержать минимум 6 символов');
+      return;
+    }
+
+    // Блокируем кнопку
+    btn.disabled = true;
+    btn.textContent = 'Загрузка...';
+
+    try {
+      // Попытка входа
+      let { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
+
+      if (signInError) {
+        // Если ошибка "Invalid login credentials" - пробуем регистрацию
+        if (signInError.message.includes('Invalid login') || signInError.message.includes('credentials')) {
+          console.log('Попытка регистрации нового пользователя:', email);
+          
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: window.location.origin,
+              data: {
+                full_name: email.split('@')[0]
+              }
+            }
+          });
+
+          if (signUpError) {
+            console.error('Ошибка регистрации:', signUpError);
+            alert(`❌ Ошибка регистрации: ${signUpError.message}\n\nВозможные причины:\n- Email уже используется\n- Регистрация отключена администратором\n- Проблема с настройками Supabase\n\nОбратитесь к администратору для получения доступа.`);
+            return;
+          }
+
+          // Проверяем, требуется ли подтверждение email
+          if (signUpData.user && !signUpData.session) {
+            alert('✅ Регистрация успешна!\n\n⚠️ Проверьте ваш email для подтверждения аккаунта.\nПосле подтверждения вы сможете войти в систему.');
+            return;
+          }
+
+          if (signUpData.user && signUpData.session) {
+            currentUser = signUpData.user;
+            alert('✅ Регистрация и вход выполнены успешно!');
+          }
+        } else {
+          alert(`❌ Ошибка входа: ${signInError.message}`);
+          return;
+        }
+      } else {
+        currentUser = signInData.user;
+        console.log('Вход выполнен успешно:', currentUser.email);
+      }
+
+      // Обновляем UI
+      document.getElementById('auth-dialog').style.display = 'none';
+      document.getElementById('user-status').textContent = `👤 ${currentUser.email}`;
+      document.getElementById('logout-btn').style.display = 'inline-block';
+      renderArchive();
+    } catch (err) {
+      console.error('Непредвиденная ошибка:', err);
+      alert('❌ Произошла непредвиденная ошибка. Попробуйте позже.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Войти';
+    }
   }
 
   async function logout() {
@@ -363,33 +438,41 @@
     const upperNumber = carNumber.toUpperCase();
     document.getElementById('car-number').value = upperNumber;
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('vehicles')
       .select('*')
       .eq('car_number', upperNumber)
       .single();
 
     if (data) {
-      document.getElementById('client-fio').value = data.client_fio;
+      document.getElementById('client-fio').value = data.client_fio || '';
       document.getElementById('client-company').value = data.client_company || '';
-      document.getElementById('phone').value = data.phone;
-      document.getElementById('car-brand').value = data.car_brand;
-      document.getElementById('car-model').value = data.car_model;
+      document.getElementById('phone').value = data.phone || '';
+      document.getElementById('car-brand').value = data.car_brand || '';
+      document.getElementById('car-model').value = data.car_model || '';
       document.getElementById('vin').value = data.vin || '';
     }
   }
 
   // ========== ШАБЛОНЫ ==========
   async function suggestTemplate(complaint) {
-    if (!complaint.trim()) return;
+    if (!complaint.trim()) {
+      document.getElementById('template-suggestion').style.display = 'none';
+      return;
+    }
+    
     const { data } = await supabase.from('templates').select('*');
     let matched = null;
+    
     for (const t of data || []) {
-      if (t.keywords.some(kw => complaint.toLowerCase().includes(kw.toLowerCase()))) {
-        matched = t;
-        break;
+      if (t.keywords && Array.isArray(t.keywords)) {
+        if (t.keywords.some(kw => complaint.toLowerCase().includes(kw.toLowerCase()))) {
+          matched = t;
+          break;
+        }
       }
     }
+    
     const el = document.getElementById('template-suggestion');
     if (matched) {
       currentTemplate = matched;
@@ -409,7 +492,7 @@
 
     if (currentTemplate.works) {
       try {
-        const works = JSON.parse(currentTemplate.works);
+        const works = typeof currentTemplate.works === 'string' ? JSON.parse(currentTemplate.works) : currentTemplate.works;
         works.forEach(w => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -423,12 +506,12 @@
           document.getElementById('works-body').appendChild(row);
           workIndex++;
         });
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error('Ошибка парсинга работ:', e); }
     }
 
     if (currentTemplate.parts) {
       try {
-        const parts = JSON.parse(currentTemplate.parts);
+        const parts = typeof currentTemplate.parts === 'string' ? JSON.parse(currentTemplate.parts) : currentTemplate.parts;
         parts.forEach(p => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -442,7 +525,7 @@
           document.getElementById('parts-body').appendChild(row);
           partIndex++;
         });
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error('Ошибка парсинга запчастей:', e); }
     }
     calculateSums();
     document.getElementById('template-suggestion').style.display = 'none';
@@ -460,41 +543,51 @@
       <td><input type="number" value="0" oninput="calculateSums()"></td>
       <td class="sum-cell">0.00</td>
       <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
-    tbody.appendChild(row); workIndex++;
+    tbody.appendChild(row); 
+    workIndex++;
   }
 
   function addPartRow() {
     const tbody = document.getElementById('parts-body');
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td><input type="text" placeholder="Артикль"></td>
+      <td><input type="text" placeholder="Артикул"></td>
       <td><input type="text" placeholder="Наименование"></td>
       <td><input type="text" placeholder="Сторона"></td>
       <td><input type="number" value="1" min="1" oninput="calculateSums()"></td>
       <td><input type="number" value="0" oninput="calculateSums()"></td>
       <td class="sum-cell">0.00</td>
       <td><button class="btn-sm btn-danger" onclick="deleteRow(this)">🗑️</button></td>`;
-    tbody.appendChild(row); partIndex++;
+    tbody.appendChild(row); 
+    partIndex++;
   }
 
-  function deleteRow(btn) { btn.closest('tr').remove(); calculateSums(); }
+  function deleteRow(btn) { 
+    btn.closest('tr').remove(); 
+    calculateSums(); 
+  }
 
   function calculateSums() {
     let total = 0;
+    
     Array.from(document.querySelectorAll('#works-body tr')).forEach(row => {
-      const qty = parseFloat(row.querySelectorAll('input')[2]?.value) || 0;
-      const price = parseFloat(row.querySelectorAll('input')[4]?.value) || 0;
+      const inputs = row.querySelectorAll('input');
+      const qty = parseFloat(inputs[2]?.value) || 0;
+      const price = parseFloat(inputs[4]?.value) || 0;
       const sum = qty * price;
       row.querySelector('.sum-cell').textContent = sum.toFixed(2);
       total += sum;
     });
+    
     Array.from(document.querySelectorAll('#parts-body tr')).forEach(row => {
-      const qty = parseFloat(row.querySelectorAll('input')[3]?.value) || 0;
-      const price = parseFloat(row.querySelectorAll('input')[4]?.value) || 0;
+      const inputs = row.querySelectorAll('input');
+      const qty = parseFloat(inputs[3]?.value) || 0;
+      const price = parseFloat(inputs[4]?.value) || 0;
       const sum = qty * price;
       row.querySelector('.sum-cell').textContent = sum.toFixed(2);
       total += sum;
     });
+    
     document.getElementById('total-sum').textContent = total.toFixed(2);
   }
 
@@ -510,24 +603,35 @@
   // ========== АРХИВ ==========
   async function renderArchive() {
     if (!currentUser) return;
-    const { data } = await supabase
+    
+    const { data, error } = await supabase
       .from('claims')
       .select('*')
       .eq('master_id', currentUser.id)
       .order('created_at', { ascending: false });
 
     const el = document.getElementById('archive-list');
+    
+    if (error) {
+      el.innerHTML = `<p style="color:red;">Ошибка загрузки: ${error.message}</p>`;
+      return;
+    }
+    
     el.innerHTML = (data?.length ? data.map(c => `
       <div style="padding:12px;border:1px solid #ddd;margin:8px 0;border-radius:6px;background:#fafafa;">
         <strong>№${c.number}</strong> — ${c.client_fio} (${c.car_number})<br>
-        Статус: ${c.status === 'agreed' ? 'Согласовано' : 'Черновик'}<br>
+        <small>Дата: ${new Date(c.created_at).toLocaleString('ru-RU')}</small><br>
+        Статус: ${c.status === 'agreed' ? '✅ Согласовано' : '📝 Черновик'}<br>
         <button class="btn-sm" onclick="loadClaim('${c.id}')">Открыть</button>
       </div>`).join('') : '<p>Заявок пока нет.</p>');
   }
 
   async function loadClaim(id) {
-    const { data } = await supabase.from('claims').select('*').eq('id', id).single();
-    if (!data) return;
+    const { data, error } = await supabase.from('claims').select('*').eq('id', id).single();
+    if (error || !data) {
+      alert('❌ Ошибка загрузки заявки');
+      return;
+    }
 
     document.getElementById('claim-id').value = data.id;
     document.getElementById('claim-number').value = data.number;
@@ -544,7 +648,7 @@
     document.getElementById('parts-body').innerHTML = '';
     workIndex = 1; partIndex = 1;
 
-    const {  works } = await supabase.from('works').select('*').eq('claim_id', id);
+    const { data: works } = await supabase.from('works').select('*').eq('claim_id', id);
     works?.forEach(w => {
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -559,7 +663,7 @@
       workIndex++;
     });
 
-    const {  parts } = await supabase.from('parts').select('*').eq('claim_id', id);
+    const { data: parts } = await supabase.from('parts').select('*').eq('claim_id', id);
     parts?.forEach(p => {
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -583,34 +687,54 @@
     if (!validateForm()) return;
     const data = collectClaimData('draft');
     const id = document.getElementById('claim-id').value;
-    const { error } = id
-      ? await supabase.from('claims').update(data).eq('id', id)
-      : await supabase.from('claims').insert(data);
-    if (error) {
-      alert('❌ Ошибка сохранения: ' + error.message);
+    
+    let claimId;
+    if (id) {
+      const { error } = await supabase.from('claims').update(data).eq('id', id);
+      if (error) {
+        alert('❌ Ошибка сохранения: ' + error.message);
+        return;
+      }
+      claimId = id;
     } else {
-      alert('✅ Черновик сохранён!');
-      resetForm();
+      const { data: newClaim, error } = await supabase.from('claims').insert(data).select('id').single();
+      if (error) {
+        alert('❌ Ошибка сохранения: ' + error.message);
+        return;
+      }
+      claimId = newClaim.id;
     }
+    
+    await saveWorksParts(claimId);
+    alert('✅ Черновик сохранён!');
+    resetForm();
   }
 
   async function agreeClaim() {
     if (!validateForm()) return;
     const data = collectClaimData('agreed');
     const id = document.getElementById('claim-id').value;
+    
     let claimId;
     if (id) {
       const { error } = await supabase.from('claims').update(data).eq('id', id);
-      if (error) { alert('❌ Ошибка: ' + error.message); return; }
+      if (error) { 
+        alert('❌ Ошибка: ' + error.message); 
+        return; 
+      }
       claimId = id;
     } else {
-      const {  newClaim, error } = await supabase.from('claims').insert(data).select('id').single();
-      if (error) { alert('❌ Ошибка: ' + error.message); return; }
+      const { data: newClaim, error } = await supabase.from('claims').insert(data).select('id').single();
+      if (error) { 
+        alert('❌ Ошибка: ' + error.message); 
+        return; 
+      }
       claimId = newClaim.id;
     }
+    
     await saveWorksParts(claimId);
     generateCSV(claimId);
-    alert('✅ Заявка согласована! CSV скачан.');
+    alert('✅ Заявка согласована! CSV файл скачан.');
     resetForm();
   }
 
@@ -631,34 +755,42 @@
   }
 
   async function saveWorksParts(claimId) {
+    // Удаляем старые записи
     await supabase.from('works').delete().eq('claim_id', claimId);
     await supabase.from('parts').delete().eq('claim_id', claimId);
+    
     const worksData = [];
     Array.from(document.querySelectorAll('#works-body tr')).forEach(row => {
       const inputs = row.querySelectorAll('input');
+      const qty = parseInt(inputs[2].value) || 1;
+      const price = parseFloat(inputs[4].value) || 0;
       worksData.push({
         claim_id: claimId,
         name: inputs[0].value,
         side: inputs[1].value || null,
-        qty: parseInt(inputs[2].value) || 1,
+        qty: qty,
         hours: parseFloat(inputs[3].value) || 0,
-        price: parseFloat(inputs[4].value) || 0,
-        sum: (parseInt(inputs[2].value) || 1) * (parseFloat(inputs[4].value) || 0)
+        price: price,
+        sum: qty * price
       });
     });
+    
     const partsData = [];
     Array.from(document.querySelectorAll('#parts-body tr')).forEach(row => {
       const inputs = row.querySelectorAll('input');
+      const qty = parseInt(inputs[3].value) || 1;
+      const price = parseFloat(inputs[4].value) || 0;
       partsData.push({
         claim_id: claimId,
         article: inputs[0].value || null,
         name: inputs[1].value,
         side: inputs[2].value || null,
-        qty: parseInt(inputs[3].value) || 1,
-        price: parseFloat(inputs[4].value) || 0,
-        sum: (parseInt(inputs[3].value) || 1) * (parseFloat(inputs[4].value) || 0)
+        qty: qty,
+        price: price,
+        sum: qty * price
       });
     });
+    
     if (worksData.length) await supabase.from('works').insert(worksData);
     if (partsData.length) await supabase.from('parts').insert(partsData);
   }
@@ -667,7 +799,8 @@
     const required = ['client-fio', 'phone', 'car-brand', 'car-model', 'car-number', 'complaint'];
     for (const id of required) {
       if (!document.getElementById(id).value.trim()) {
-        alert('Заполните обязательные поля');
+        alert('❌ Заполните все обязательные поля (отмечены *)');
+        document.getElementById(id).focus();
         return false;
       }
     }
@@ -676,8 +809,7 @@
 
   function resetForm() {
     document.getElementById('claim-id').value = '';
-    const now = new Date();
-    document.getElementById('claim-number').value = `SR-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*1000)).padStart(3,'0')}`;
+    generateClaimNumber();
     document.getElementById('car-number').value = '';
     document.getElementById('client-fio').value = '';
     document.getElementById('client-company').value = '';
@@ -696,6 +828,7 @@
   // ========== ЭКСПОРТ ==========
   function generateCSV(claimId) {
     let csv = 'Номер_заявки,Дата,Компания,ФИО,Телефон,Роль,Марка,Модель,Госномер,VIN,Тип_строки,Артикул,Наименование,Сторона,Количество,Нормочасы,Цена,Сумма\n';
+    
     const claimNumber = document.getElementById('claim-number').value;
     const date = new Date().toISOString().split('T')[0];
     const company = document.getElementById('client-company').value || '';
@@ -709,17 +842,25 @@
 
     Array.from(document.querySelectorAll('#works-body tr')).forEach(row => {
       const inputs = row.querySelectorAll('input');
-      const cols = [claimNumber, date, company, fio, phone, role, brand, model, number, vin, 'Работа', '', '', inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value, row.querySelector('.sum-cell').textContent];
+      const cols = [
+        claimNumber, date, company, fio, phone, role, brand, model, number, vin,
+        'Работа', '', inputs[0].value, inputs[1].value, inputs[2].value, 
+        inputs[3].value, inputs[4].value, row.querySelector('.sum-cell').textContent
+      ];
       csv += cols.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',') + '\n';
     });
 
     Array.from(document.querySelectorAll('#parts-body tr')).forEach(row => {
       const inputs = row.querySelectorAll('input');
-      const cols = [claimNumber, date, company, fio, phone, role, brand, model, number, vin, 'Запчасть', inputs[0].value, inputs[1].value, inputs[2].value, inputs[3].value, '', inputs[4].value, row.querySelector('.sum-cell').textContent];
+      const cols = [
+        claimNumber, date, company, fio, phone, role, brand, model, number, vin,
+        'Запчасть', inputs[0].value, inputs[1].value, inputs[2].value, 
+        inputs[3].value, '', inputs[4].value, row.querySelector('.sum-cell').textContent
+      ];
       csv += cols.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',') + '\n';
     });
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -733,6 +874,7 @@
   function printClaim() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    
     doc.setFontSize(16);
     doc.text('Заявка на ремонт — ООО «СЕРВИСТРАНСАВТО»', 14, 20);
     doc.setFontSize(12);
@@ -740,8 +882,17 @@
     doc.text(`Клиент: ${document.getElementById('client-fio').value}`, 14, 40);
     doc.text(`Авто: ${document.getElementById('car-brand').value} ${document.getElementById('car-model').value} (${document.getElementById('car-number').value})`, 14, 50);
     doc.text(`Жалоба: ${document.getElementById('complaint').value}`, 14, 60);
+    doc.text(`Итого: ${document.getElementById('total-sum').textContent} ₽`, 14, 70);
+    
     doc.save(`заявка-${document.getElementById('claim-number').value}.pdf`);
   }
+
+  // Обработка Enter в форме авторизации
+  document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && document.getElementById('auth-dialog').style.display !== 'none') {
+      login();
+    }
+  });
 </script>
 
 </body>
