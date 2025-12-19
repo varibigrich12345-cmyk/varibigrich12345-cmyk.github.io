@@ -471,4 +471,91 @@ tr:hover {
 </div>
 
 <script>
-  
+
+  // Supabase configuration
+const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwNDkwNzIsImV4cCI6MjA0ODYyNTA3Mn0.gU3mIBV1iCR4NcdJ9WHhIILjAGFcD2Z-D4A4yBBKDwM';
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Login function
+async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const btn = event.target;
+    
+    if (!email || !password) {
+        alert('Пожалуйста, введите email и пароль');
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span style="display:inline-block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite"></span>';
+    
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) {
+            alert('Ошибка входа: ' + error.message);
+            btn.disabled = false;
+            btn.textContent = 'Войти';
+        } else {
+            console.log('Успешный вход:', data);
+            checkUser();
+        }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Войти';
+    }
+}
+
+// Logout function
+async function logout() {
+    await supabaseClient.auth.signOut();
+    checkUser();
+}
+
+// Check user authentication
+async function checkUser() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    
+    const loginScreen = document.getElementById('loginScreen');
+    const mainScreen = document.getElementById('mainScreen');
+    const userInfo = document.getElementById('userInfo');
+    
+    if (user) {
+        loginScreen.classList.add('hide');
+        mainScreen.classList.remove('hide');
+        userInfo.textContent = user.email;
+        loadClaims();
+    } else {
+        loginScreen.classList.remove('hide');
+        mainScreen.classList.add('hide');
+        userInfo.textContent = '';
+    }
+}
+
+// Show search screen
+function showSearchScreen() {
+    document.getElementById('mainScreen').classList.add('hide');
+    document.getElementById('searchScreen').classList.remove('hide');
+}
+
+// Show main screen
+function showMainScreen() {
+    document.getElementById('searchScreen').classList.add('hide');
+    document.getElementById('mainScreen').classList.remove('hide');
+}
+
+// Load claims placeholder
+async function loadClaims() {
+    console.log('Загрузка заявок...');
+    // TODO: Implement claims loading from Supabase
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', checkUser);
