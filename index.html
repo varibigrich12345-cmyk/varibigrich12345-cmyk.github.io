@@ -4,10 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</title>
-  <!-- Supabase v2 — ESM -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* ... твой CSS без изменений ... */
     * {
       margin: 0;
       padding: 0;
@@ -323,16 +321,51 @@
       color: #2c3e50;
     }
 
+    /* Стили для таблиц работ и запчастей */
+    .table-form {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+
+    .table-form th,
+    .table-form td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+    }
+
+    .table-form input,
+    .table-form select {
+      width: 100%;
+      padding: 4px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+
+    .table-form input[type="number"] {
+      text-align: right;
+    }
+
     @media print {
       .no-print {
         display: none !important;
       }
-      .print-only {
-        display: block !important;
+      .print-hide {
+        display: none !important;
+      }
+      body {
+        background: white;
+        padding: 0;
+      }
+      .app {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: none;
       }
     }
 
-    /* ✅ Анимация spin */
+    /* Анимация загрузки */
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
@@ -355,7 +388,6 @@
         <div class="form-group">
           <input type="password" id="loginPassword" placeholder="Пароль">
         </div>
-        <!-- ✅ Убрали onclick -->
         <button id="loginBtn" class="btn btn-primary">Войти</button>
       </div>
     </div>
@@ -395,7 +427,9 @@
                 <th>Действия</th>
               </tr>
             </thead>
-            <tbody id="claimsBody"></tbody>
+            <tbody id="claimsBody">
+              <tr><td colspan="7" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -412,6 +446,8 @@
       <div class="modal-body">
         <form id="claimForm">
           <input type="hidden" id="claimId">
+          
+          <!-- Блок клиента и авто -->
           <div class="form-row">
             <div class="form-group">
               <label>Госномер *</label>
@@ -422,6 +458,7 @@
               <input type="text" id="carBrand">
             </div>
           </div>
+
           <div class="form-row">
             <div class="form-group">
               <label>VIN</label>
@@ -432,6 +469,7 @@
               <input type="number" id="mileage">
             </div>
           </div>
+
           <div class="form-row">
             <div class="form-group">
               <label>ФИО клиента *</label>
@@ -442,28 +480,83 @@
               <input type="text" id="clientCompany">
             </div>
           </div>
+
           <div class="form-group">
             <label>Телефон *</label>
             <input type="tel" id="phone" required>
           </div>
+
           <div class="form-group">
             <label>Описание проблемы</label>
-            <textarea id="complaint"></textarea>
+            <textarea id="complaint" placeholder="Укажите жалобу клиента"></textarea>
           </div>
+
+          <!-- Таблица РАБОТ -->
+          <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Список работ</h3>
+          <div class="table-container" style="margin-bottom:15px;">
+            <table id="worksTable" class="table-form">
+              <thead>
+                <tr>
+                  <th>Наименование</th>
+                  <th>Сторона</th>
+                  <th>Положение</th>
+                  <th>Кол-во</th>
+                  <th>Нормочасы</th>
+                  <th class="print-hide">Цена</th>
+                  <th class="print-hide">Сумма</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="worksBody"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addWorkBtn">+ Добавить работу</button>
+
+          <!-- Таблица ЗАПЧАСТЕЙ -->
+          <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Запчасти</h3>
+          <div class="table-container" style="margin-bottom:15px;">
+            <table id="partsTable" class="table-form">
+              <thead>
+                <tr>
+                  <th>Артикул</th>
+                  <th>Наименование</th>
+                  <th>Сторона</th>
+                  <th>Положение</th>
+                  <th>Кол-во</th>
+                  <th class="print-hide">Цена</th>
+                  <th class="print-hide">Сумма</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="partsBody"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addPartBtn">+ Добавить запчасть</button>
+
+          <!-- Итоги -->
+          <div style="display:flex;justify-content:space-between;margin:20px 0;font-weight:bold;">
+            <span>Итого работ: <span id="totalWorks">0 ₽</span></span>
+            <span>Итого запчастей: <span id="totalParts">0 ₽</span></span>
+            <span>Общая сумма: <span id="totalSum">0 ₽</span></span>
+          </div>
+
+          <!-- Статус -->
           <div class="form-group">
             <label>Статус</label>
             <select id="status">
               <option value="draft">Черновик</option>
-              <option value="agreed">Подтверждена</option>
+              <option value="agreed">Согласовано</option>
               <option value="in_progress">В работе</option>
               <option value="completed">Завершена</option>
             </select>
           </div>
+
+          <!-- Кнопки -->
           <div style="margin-top:20px">
             <button type="submit" class="btn btn-success">Сохранить</button>
             <button type="button" class="btn btn-secondary" id="cancelModalBtn">Отмена</button>
             <button type="button" class="btn btn-warning" id="exportBtn" style="display:none">Экспорт CSV</button>
-            <button type="button" class="btn btn-primary" id="printBtn" style="display:none">Печать</button>
+            <button type="button" class="btn btn-primary" id="printBtn">Печать</button>
           </div>
         </form>
       </div>
@@ -471,12 +564,121 @@
   </div>
 
   <script>
-    // Supabase configuration — ✅ URL без пробелов
+    // Supabase configuration — АКТУАЛЬНЫЙ КЛЮЧ
     const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Все функции — в глобальной области, но не используются в HTML
+    // ========== Вспомогательные функции для таблиц ==========
+    function createSideSelect(value = '') {
+      const select = document.createElement('select');
+      const options = ['–', 'Левая', 'Правая', 'Передняя', 'Задняя'];
+      options.forEach(opt => {
+        const el = document.createElement('option');
+        el.value = opt === '–' ? '' : opt;
+        el.textContent = opt;
+        el.selected = el.value === value;
+        select.appendChild(el);
+      });
+      return select;
+    }
+
+    function createPositionSelect(value = '') {
+      const select = document.createElement('select');
+      const options = ['–', 'Верхний', 'Нижний', 'Передний', 'Задний', 'Центр'];
+      options.forEach(opt => {
+        const el = document.createElement('option');
+        el.value = opt === '–' ? '' : opt;
+        el.textContent = opt;
+        el.selected = el.value === value;
+        select.appendChild(el);
+      });
+      return select;
+    }
+
+    function addWorkRow(data = null) {
+      const tbody = document.getElementById('worksBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" placeholder="Наименование работы" value="${data?.name || ''}"></td>
+        <td></td>
+        <td></td>
+        <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
+        <td><input type="number" min="0" step="0.1" value="${data?.hours || 0.5}" style="width:70px;"></td>
+        <td class="print-hide"><input type="number" min="0" value="${data?.price || 0}" style="width:80px;"></td>
+        <td class="print-hide" style="text-align:right;">${(data ? (data.quantity * data.price).toFixed(2) : '0.00')} ₽</td>
+        <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
+      `;
+      tr.querySelector('td:nth-child(2)').appendChild(createSideSelect(data?.side));
+      tr.querySelector('td:nth-child(3)').appendChild(createPositionSelect(data?.position));
+      const btn = tr.querySelector('button');
+      btn.onclick = () => {
+        tr.remove();
+        calculateTotals();
+      };
+      tbody.appendChild(tr);
+      attachInputEvents(tr);
+    }
+
+    function addPartRow(data = null) {
+      const tbody = document.getElementById('partsBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" placeholder="Артикул" value="${data?.article || ''}"></td>
+        <td><input type="text" placeholder="Наименование" value="${data?.name || ''}"></td>
+        <td></td>
+        <td></td>
+        <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
+        <td class="print-hide"><input type="number" min="0" value="${data?.price || 0}" style="width:80px;"></td>
+        <td class="print-hide" style="text-align:right;">${(data ? (data.quantity * data.price).toFixed(2) : '0.00')} ₽</td>
+        <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
+      `;
+      tr.querySelector('td:nth-child(3)').appendChild(createSideSelect(data?.side));
+      tr.querySelector('td:nth-child(4)').appendChild(createPositionSelect(data?.position));
+      const btn = tr.querySelector('button');
+      btn.onclick = () => {
+        tr.remove();
+        calculateTotals();
+      };
+      tbody.appendChild(tr);
+      attachInputEvents(tr);
+    }
+
+    function attachInputEvents(row) {
+      const inputs = row.querySelectorAll('input[type="number"]');
+      inputs.forEach(input => {
+        input.addEventListener('input', calculateTotals);
+      });
+    }
+
+    function calculateTotals() {
+      let totalWorks = 0;
+      document.querySelectorAll('#worksBody tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        const qty = parseFloat(cells[3].querySelector('input').value) || 0;
+        const price = parseFloat(cells[5].querySelector('input').value) || 0;
+        const sum = qty * price;
+        cells[6].textContent = `${sum.toFixed(2)} ₽`;
+        totalWorks += sum;
+      });
+
+      let totalParts = 0;
+      document.querySelectorAll('#partsBody tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        const qty = parseFloat(cells[4].querySelector('input').value) || 0;
+        const price = parseFloat(cells[5].querySelector('input').value) || 0;
+        const sum = qty * price;
+        cells[6].textContent = `${sum.toFixed(2)} ₽`;
+        totalParts += sum;
+      });
+
+      const totalSum = totalWorks + totalParts;
+      document.getElementById('totalWorks').textContent = `${totalWorks.toFixed(2)} ₽`;
+      document.getElementById('totalParts').textContent = `${totalParts.toFixed(2)} ₽`;
+      document.getElementById('totalSum').textContent = `${totalSum.toFixed(2)} ₽`;
+    }
+
+    // ========== Основные функции ==========
     async function login() {
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
@@ -491,17 +693,12 @@
       btn.innerHTML = '<span style="display:inline-block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite"></span>';
 
       try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
-
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) {
           alert('Ошибка входа: ' + error.message);
           btn.disabled = false;
           btn.textContent = 'Войти';
         } else {
-          console.log('Успешный вход:', data);
           checkUser();
         }
       } catch (err) {
@@ -518,7 +715,6 @@
 
     async function checkUser() {
       const { data, error } = await supabaseClient.auth.getUser();
-
       const loginScreen = document.getElementById('loginScreen');
       const mainScreen = document.getElementById('mainScreen');
       const userInfo = document.getElementById('userInfo');
@@ -549,46 +745,133 @@
       document.getElementById('claimsBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
     }
 
-    // Заглушки
     function searchByCar() { alert('Поиск пока не реализован'); }
-    function showClaimForm() { alert('Создание заявки — в разработке'); }
-    function saveClaim(event) { event.preventDefault(); alert('Сохранение — в разработке'); }
-    function exportToCSV() { alert('Экспорт CSV — в разработке'); }
-    function printClaim() { alert('Печать — в разработке'); }
+
+    async function saveClaim(event) {
+      event.preventDefault();
+
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      if (userError || !user) {
+        alert('Сначала войдите в систему');
+        return;
+      }
+
+      // Сбор данных работ
+      const works = [];
+      document.querySelectorAll('#worksBody tr').forEach(tr => {
+        const inputs = tr.querySelectorAll('input, select');
+        const name = inputs[0].value;
+        if (!name) return;
+        works.push({
+          name: name,
+          side: inputs[1].value,
+          position: inputs[2].value,
+          quantity: parseInt(inputs[3].value) || 1,
+          hours: parseFloat(inputs[4].value) || 0,
+          price: parseFloat(inputs[5].value) || 0
+        });
+      });
+
+      // Сбор данных запчастей
+      const parts = [];
+      document.querySelectorAll('#partsBody tr').forEach(tr => {
+        const inputs = tr.querySelectorAll('input, select');
+        const article = inputs[0].value;
+        const name = inputs[1].value;
+        if (!article && !name) return;
+        parts.push({
+          article: article,
+          name: name,
+          side: inputs[2].value,
+          position: inputs[3].value,
+          quantity: parseInt(inputs[4].value) || 1,
+          price: parseFloat(inputs[5].value) || 0
+        });
+      });
+
+      const claimData = {
+        car_number: document.getElementById('carNumber').value,
+        car_brand: document.getElementById('carBrand').value,
+        vin: document.getElementById('vin').value,
+        mileage: parseInt(document.getElementById('mileage').value) || null,
+        client_fio: document.getElementById('clientFio').value,
+        client_company: document.getElementById('clientCompany').value,
+        phone: document.getElementById('phone').value,
+        complaint: document.getElementById('complaint').value,
+        status: document.getElementById('status').value,
+        works: works,
+        parts: parts,
+        user_id: user.id
+      };
+
+      const claimId = document.getElementById('claimId').value;
+      let result;
+      if (claimId) {
+        result = await supabaseClient.from('claims').update(claimData).eq('id', claimId);
+      } else {
+        result = await supabaseClient.from('claims').insert([claimData]);
+      }
+
+      if (result.error) {
+        alert('Ошибка: ' + result.error.message);
+      } else {
+        alert('Заявка сохранена!');
+        closeModal();
+        loadClaims();
+      }
+    }
+
+    function showClaimForm() {
+      document.getElementById('claimId').value = '';
+      document.getElementById('modalTitle').textContent = 'Новая заявка';
+      document.getElementById('carNumber').value = '';
+      document.getElementById('carBrand').value = '';
+      document.getElementById('vin').value = '';
+      document.getElementById('mileage').value = '';
+      document.getElementById('clientFio').value = '';
+      document.getElementById('clientCompany').value = '';
+      document.getElementById('phone').value = '';
+      document.getElementById('complaint').value = '';
+      document.getElementById('status').value = 'draft';
+
+      // Очистка и инициализация таблиц
+      document.getElementById('worksBody').innerHTML = '';
+      document.getElementById('partsBody').innerHTML = '';
+      addWorkRow();
+      addPartRow();
+      calculateTotals();
+
+      document.getElementById('claimModal').classList.add('show');
+    }
 
     function closeModal() {
       document.getElementById('claimModal').classList.remove('show');
     }
 
-    // 👇 Добавляем события через addEventListener — РЕКОМЕНДОВАННЫЙ ПОДХОД
+    function printClaim() {
+      window.print();
+    }
+
+    // ========== Инициализация ==========
     document.addEventListener('DOMContentLoaded', () => {
-      // Кнопка входа
+      // Кнопки
       document.getElementById('loginBtn').addEventListener('click', login);
-
-      // Кнопка выхода
       document.getElementById('logoutBtn').addEventListener('click', logout);
-
-      // Поиск по госномеру
       document.getElementById('searchBtn').addEventListener('click', searchByCar);
       document.getElementById('searchByCarBtn').addEventListener('click', showSearchScreen);
-
-      // Назад к заявкам
       document.getElementById('backToMainBtn').addEventListener('click', showMainScreen);
-
-      // Создать заявку
       document.getElementById('createClaimBtn').addEventListener('click', showClaimForm);
-
-      // Модальное окно
       document.getElementById('closeModalBtn').addEventListener('click', closeModal);
       document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+      document.getElementById('printBtn').addEventListener('click', printClaim);
+      document.getElementById('addWorkBtn').addEventListener('click', () => addWorkRow());
+      document.getElementById('addPartBtn').addEventListener('click', () => addPartRow());
+      document.getElementById('claimForm').addEventListener('submit', saveClaim);
 
-      // Закрытие по клику на фон
+      // Закрытие модалки по клику на фон
       document.getElementById('claimModal').addEventListener('click', (e) => {
         if (e.target.id === 'claimModal') closeModal();
       });
-
-      // Форма заявки
-      document.getElementById('claimForm').addEventListener('submit', saveClaim);
 
       // Инициализация
       checkUser();
