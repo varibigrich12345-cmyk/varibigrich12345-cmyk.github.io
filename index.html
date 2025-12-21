@@ -813,7 +813,7 @@
     async function saveClaim(event) {
       event.preventDefault();
 
-      const {  { user }, error: userError } = await supabaseClient.auth.getUser();
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
       if (userError || !user) {
         alert('Сначала войдите в систему');
         return;
