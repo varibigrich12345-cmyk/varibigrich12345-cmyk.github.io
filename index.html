@@ -626,6 +626,13 @@
       syncComplaintToWorks();
       calculateTotals();
     };
+
+    // ✅ Обработчик для поля "Наименование" — синхронизируем при вводе
+    const nameInput = tr.querySelector('input[type="text"]');
+    nameInput.addEventListener('input', () => {
+      syncComplaintToWorks();
+    });
+
     tbody.appendChild(tr);
     attachInputEvents(tr);
 
