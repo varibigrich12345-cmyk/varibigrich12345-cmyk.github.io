@@ -421,6 +421,7 @@
                 <th>Номер</th>
                 <th>Дата</th>
                 <th>Госномер</th>
+                <th>Авто</th>
                 <th>Клиент</th>
                 <th>Телефон</th>
                 <th>Статус</th>
@@ -428,7 +429,7 @@
               </tr>
             </thead>
             <tbody id="claimsBody">
-              <tr><td colspan="7" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>
+              <tr><td colspan="8" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>
             </tbody>
           </table>
         </div>
@@ -445,22 +446,28 @@
       </div>
       <div class="modal-body">
         <form id="claimForm">
-          <!-- Скрытый инпут для номера -->
-          <!-- Скрытый инпут для номера (автоматически генерируется) -->
-          <input type="hidden" id="claimNumber" name="number">
+          <!-- Скрытые поля -->
           <input type="hidden" id="claimId">
-          
+          <input type="hidden" id="claimNumber" name="number">
+
           <!-- Блок клиента и авто -->
           <div class="form-row">
             <div class="form-group">
               <label>Госномер *</label>
               <input type="text" id="carNumber" required>
             </div>
-            
-           <div class="form-group">
-            <label>Марка/Модель *</label>
-            <input type="text" id="carBrand" required>
-           </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Марка *</label>
+              <input type="text" list="carBrandList" id="carBrand" required>
+            </div>
+            <div class="form-group">
+              <label>Модель *</label>
+              <input type="text" id="carModel" required>
+            </div>
+          </div>
 
           <div class="form-row">
             <div class="form-group">
@@ -507,7 +514,7 @@
           </div>
           <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addComplaintBtn">+ Добавить строку</button>
 
-          <!-- Список работ (автоматически заполняется из описания) -->
+          <!-- Список работ -->
           <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Список работ</h3>
           <div class="table-container" style="margin-bottom:15px;">
             <table id="worksTable" class="table-form">
@@ -578,470 +585,467 @@
     </div>
   </div>
 
+  <!-- Списки автозаполнения -->
+  <datalist id="carBrandList">
+    <option value="ГАЗель">
+    <option value="Ford Transit">
+    <option value="Hyundai HD78">
+    <option value="Peugeot Boxer">
+    <option value="MAN">
+    <option value="Mercedes-Benz Sprinter">
+    <option value="Volkswagen Transporter">
+    <option value="Renault Master">
+    <option value="IVECO Daily">
+    <option value="KAMAZ">
+  </datalist>
+
+  <datalist id="workList">
+    <option value="Замена шаровой опоры">
+    <option value="Замена тормозных колодок">
+    <option value="Замена масла в двигателе">
+    <option value="Замена свечей зажигания">
+    <option value="Замена ремня ГРМ">
+    <option value="Замена амортизатора">
+    <option value="Замена рулевой рейки">
+    <option value="Замена подшипника ступицы">
+    <option value="Замена тормозного шланга">
+    <option value="Замена радиатора">
+  </datalist>
+
+  <datalist id="partList">
+    <option value="Опора шаровая">
+    <option value="Колодки тормозные">
+    <option value="Масло моторное">
+    <option value="Свечи зажигания">
+    <option value="Ремень ГРМ">
+    <option value="Амортизатор">
+    <option value="Рейка рулевая">
+    <option value="Подшипник ступицы">
+    <option value="Шланг тормозной">
+    <option value="Радиатор">
+  </datalist>
+
   <script>
-  // Supabase configuration — АКТУАЛЬНЫЙ КЛЮЧ
-  const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Supabase configuration — АКТУАЛЬНЫЙ КЛЮЧ
+    const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ========== Вспомогательные функции ==========
-  function createSideSelect(value = '') {
-    const select = document.createElement('select');
-    const options = ['–', 'Левая', 'Правая', 'Передняя', 'Задняя'];
-    options.forEach(opt => {
-      const el = document.createElement('option');
-      el.value = opt === '–' ? '' : opt;
-      el.textContent = opt;
-      el.selected = el.value === value;
-      select.appendChild(el);
-    });
-    return select;
-  }
-
-  function createPositionSelect(value = '') {
-    const select = document.createElement('select');
-    const options = ['–', 'Верхний', 'Нижний', 'Передний', 'Задний', 'Центр'];
-    options.forEach(opt => {
-      const el = document.createElement('option');
-      el.value = opt === '–' ? '' : opt;
-      el.textContent = opt;
-      el.selected = el.value === value;
-      select.appendChild(el);
-    });
-    return select;
-  }
-
-  function generateClaimNumber() {
-    const now = new Date();
-    const year = now.getFullYear().toString().slice(-2);
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `CLAIM-${year}${month}${day}-${random}`;
-  }
-
-  // ========== Автозаполнение для работ и запчастей ==========
-  const workSuggestions = [
-    "Замена шаровой опоры",
-    "Замена тормозных колодок",
-    "Замена масла в двигателе",
-    "Замена свечей зажигания",
-    "Замена ремня ГРМ",
-    "Замена амортизатора",
-    "Замена рулевой рейки",
-    "Замена подшипника ступицы",
-    "Замена тормозного шланга",
-    "Замена радиатора"
-  ];
-
-  const partSuggestions = [
-    "Опора шаровая",
-    "Колодки тормозные",
-    "Масло моторное",
-    "Свечи зажигания",
-    "Ремень ГРМ",
-    "Амортизатор",
-    "Рейка рулевая",
-    "Подшипник ступицы",
-    "Шланг тормозной",
-    "Радиатор"
-  ];
-
-  function addComplaintRow(data = null) {
-    const tbody = document.getElementById('complaintBody');
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><input type="text" list="workList" placeholder="Наименование работы" value="${data?.name || ''}"></td>
-      <td></td>
-      <td></td>
-      <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
-      <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
-    `;
-    tr.querySelector('td:nth-child(2)').appendChild(createSideSelect(data?.side));
-    tr.querySelector('td:nth-child(3)').appendChild(createPositionSelect(data?.position));
-    const btn = tr.querySelector('button');
-    btn.onclick = () => {
-      tr.remove();
-      syncComplaintToWorks();
-      calculateTotals();
-    };
-
-    // Обработчик для поля "Наименование"
-    const nameInput = tr.querySelector('input[type="text"]');
-    nameInput.addEventListener('input', () => {
-      syncComplaintToWorks();
-    });
-
-    tbody.appendChild(tr);
-    attachInputEvents(tr);
-
-    // Автоматически синхронизируем после добавления строки
-    syncComplaintToWorks();
-  }
-
-  function addWorkRow(data = null) {
-    const tbody = document.getElementById('worksBody');
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><input type="text" list="workList" placeholder="Наименование работы" value="${data?.name || ''}"></td>
-      <td></td>
-      <td></td>
-      <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
-      <td class="print-hide"><input type="number" min="0" value="${data?.price || 0}" style="width:80px;"></td>
-      <td class="print-hide" style="text-align:right;">${(data ? (data.quantity * data.price).toFixed(2) : '0.00')} ₽</td>
-      <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
-    `;
-    tr.querySelector('td:nth-child(2)').appendChild(createSideSelect(data?.side));
-    tr.querySelector('td:nth-child(3)').appendChild(createPositionSelect(data?.position));
-    const btn = tr.querySelector('button');
-    btn.onclick = () => {
-      tr.remove();
-      calculateTotals();
-    };
-    tbody.appendChild(tr);
-    attachInputEvents(tr);
-  }
-
-  function addPartRow(data = null) {
-    const tbody = document.getElementById('partsBody');
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><input type="text" list="partList" placeholder="Артикул" value="${data?.article || ''}"></td>
-      <td><input type="text" list="partList" placeholder="Наименование" value="${data?.name || ''}"></td>
-      <td></td>
-      <td></td>
-      <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
-      <td class="print-hide"><input type="number" min="0" value="${data?.price || 0}" style="width:80px;"></td>
-      <td class="print-hide" style="text-align:right;">${(data ? (data.quantity * data.price).toFixed(2) : '0.00')} ₽</td>
-      <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
-    `;
-    tr.querySelector('td:nth-child(3)').appendChild(createSideSelect(data?.side));
-    tr.querySelector('td:nth-child(4)').appendChild(createPositionSelect(data?.position));
-    const btn = tr.querySelector('button');
-    btn.onclick = () => {
-      tr.remove();
-      calculateTotals();
-    };
-    tbody.appendChild(tr);
-    attachInputEvents(tr);
-  }
-
-  function attachInputEvents(row) {
-    const inputs = row.querySelectorAll('input[type="number"]');
-    inputs.forEach(input => {
-      input.addEventListener('input', () => {
-        calculateTotals();
-        if (row.closest('#complaintBody')) {
-          syncComplaintToWorks();
-        }
+    // ========== Вспомогательные функции ==========
+    function createSideSelect(value = '') {
+      const select = document.createElement('select');
+      const options = ['–', 'Левая', 'Правая', 'Передняя', 'Задняя'];
+      options.forEach(opt => {
+        const el = document.createElement('option');
+        el.value = opt === '–' ? '' : opt;
+        el.textContent = opt;
+        el.selected = el.value === value;
+        select.appendChild(el);
       });
-    });
-  }
-
-  function syncComplaintToWorks() {
-    const worksBody = document.getElementById('worksBody');
-    const complaintRows = Array.from(document.querySelectorAll('#complaintBody tr'));
-    
-    // Очищаем таблицу работ
-    worksBody.innerHTML = '';
-    
-    // Копируем каждую строку из описания в список работ
-    complaintRows.forEach(tr => {
-      const inputs = tr.querySelectorAll('input, select');
-      const name = inputs[0].value;
-      if (!name) return;
-      
-      const workData = {
-        name: name,
-        side: inputs[1].value,
-        position: inputs[2].value,
-        quantity: parseInt(inputs[3].value) || 1,
-        price: 0
-      };
-      
-      addWorkRow(workData);
-    });
-  }
-
-  function calculateTotals() {
-    let totalWorks = 0;
-    document.querySelectorAll('#worksBody tr').forEach(tr => {
-      const cells = tr.querySelectorAll('td');
-      const qty = parseFloat(cells[3].querySelector('input').value) || 0;
-      const price = parseFloat(cells[4].querySelector('input').value) || 0;
-      const sum = qty * price;
-      cells[5].textContent = `${sum.toFixed(2)} ₽`;
-      totalWorks += sum;
-    });
-
-    let totalParts = 0;
-    document.querySelectorAll('#partsBody tr').forEach(tr => {
-      const cells = tr.querySelectorAll('td');
-      const qty = parseFloat(cells[4].querySelector('input').value) || 0;
-      const price = parseFloat(cells[5].querySelector('input').value) || 0;
-      const sum = qty * price;
-      cells[6].textContent = `${sum.toFixed(2)} ₽`;
-      totalParts += sum;
-    });
-
-    const totalSum = totalWorks + totalParts;
-    document.getElementById('totalWorks').textContent = `${totalWorks.toFixed(2)} ₽`;
-    document.getElementById('totalParts').textContent = `${totalParts.toFixed(2)} ₽`;
-    document.getElementById('totalSum').textContent = `${totalSum.toFixed(2)} ₽`;
-  }
-
-  // ========== Основные функции ==========
-  async function login() {
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const btn = document.getElementById('loginBtn');
-
-    if (!email || !password) {
-      alert('Пожалуйста, введите email и пароль');
-      return;
+      return select;
     }
 
-    btn.disabled = true;
-    btn.innerHTML = '<span style="display:inline-block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite"></span>';
+    function createPositionSelect(value = '') {
+      const select = document.createElement('select');
+      const options = ['–', 'Верхний', 'Нижний', 'Передний', 'Задний', 'Центр'];
+      options.forEach(opt => {
+        const el = document.createElement('option');
+        el.value = opt === '–' ? '' : opt;
+        el.textContent = opt;
+        el.selected = el.value === value;
+        select.appendChild(el);
+      });
+      return select;
+    }
 
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        alert('Ошибка входа: ' + error.message);
+    function generateClaimNumber() {
+      const now = new Date();
+      const year = now.getFullYear().toString().slice(-2);
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      return `CLAIM-${year}${month}${day}-${random}`;
+    }
+
+    function addComplaintRow(data = null) {
+      const tbody = document.getElementById('complaintBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" list="workList" placeholder="Наименование работы" value="${data?.name || ''}"></td>
+        <td></td>
+        <td></td>
+        <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
+        <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
+      `;
+      tr.querySelector('td:nth-child(2)').appendChild(createSideSelect(data?.side));
+      tr.querySelector('td:nth-child(3)').appendChild(createPositionSelect(data?.position));
+      const btn = tr.querySelector('button');
+      btn.onclick = () => {
+        tr.remove();
+        syncComplaintToWorks();
+        calculateTotals();
+      };
+
+      const nameInput = tr.querySelector('input[type="text"]');
+      nameInput.addEventListener('input', () => {
+        syncComplaintToWorks();
+      });
+
+      tbody.appendChild(tr);
+      attachInputEvents(tr);
+      syncComplaintToWorks();
+    }
+
+    function addWorkRow(data = null) {
+      const tbody = document.getElementById('worksBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" list="workList" placeholder="Наименование работы" value="${data?.name || ''}"></td>
+        <td></td>
+        <td></td>
+        <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
+        <td class="print-hide"><input type="number" min="0" value="${data?.price || 0}" style="width:80px;"></td>
+        <td class="print-hide" style="text-align:right;">${(data ? (data.quantity * data.price).toFixed(2) : '0.00')} ₽</td>
+        <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
+      `;
+      tr.querySelector('td:nth-child(2)').appendChild(createSideSelect(data?.side));
+      tr.querySelector('td:nth-child(3)').appendChild(createPositionSelect(data?.position));
+      const btn = tr.querySelector('button');
+      btn.onclick = () => {
+        tr.remove();
+        calculateTotals();
+      };
+      tbody.appendChild(tr);
+      attachInputEvents(tr);
+    }
+
+    function addPartRow(data = null) {
+      const tbody = document.getElementById('partsBody');
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" list="partList" placeholder="Артикул" value="${data?.article || ''}"></td>
+        <td><input type="text" list="partList" placeholder="Наименование" value="${data?.name || ''}"></td>
+        <td></td>
+        <td></td>
+        <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
+        <td class="print-hide"><input type="number" min="0" value="${data?.price || 0}" style="width:80px;"></td>
+        <td class="print-hide" style="text-align:right;">${(data ? (data.quantity * data.price).toFixed(2) : '0.00')} ₽</td>
+        <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
+      `;
+      tr.querySelector('td:nth-child(3)').appendChild(createSideSelect(data?.side));
+      tr.querySelector('td:nth-child(4)').appendChild(createPositionSelect(data?.position));
+      const btn = tr.querySelector('button');
+      btn.onclick = () => {
+        tr.remove();
+        calculateTotals();
+      };
+      tbody.appendChild(tr);
+      attachInputEvents(tr);
+    }
+
+    function attachInputEvents(row) {
+      const inputs = row.querySelectorAll('input[type="number"]');
+      inputs.forEach(input => {
+        input.addEventListener('input', () => {
+          calculateTotals();
+          if (row.closest('#complaintBody')) {
+            syncComplaintToWorks();
+          }
+        });
+      });
+    }
+
+    function syncComplaintToWorks() {
+      const worksBody = document.getElementById('worksBody');
+      const complaintRows = Array.from(document.querySelectorAll('#complaintBody tr'));
+      worksBody.innerHTML = '';
+      complaintRows.forEach(tr => {
+        const inputs = tr.querySelectorAll('input, select');
+        const name = inputs[0].value;
+        if (!name) return;
+        const workData = {
+          name: name,
+          side: inputs[1].value,
+          position: inputs[2].value,
+          quantity: parseInt(inputs[3].value) || 1,
+          price: 0
+        };
+        addWorkRow(workData);
+      });
+    }
+
+    function calculateTotals() {
+      let totalWorks = 0;
+      document.querySelectorAll('#worksBody tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        const qty = parseFloat(cells[3].querySelector('input').value) || 0;
+        const price = parseFloat(cells[4].querySelector('input').value) || 0;
+        const sum = qty * price;
+        cells[5].textContent = `${sum.toFixed(2)} ₽`;
+        totalWorks += sum;
+      });
+
+      let totalParts = 0;
+      document.querySelectorAll('#partsBody tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        const qty = parseFloat(cells[4].querySelector('input').value) || 0;
+        const price = parseFloat(cells[5].querySelector('input').value) || 0;
+        const sum = qty * price;
+        cells[6].textContent = `${sum.toFixed(2)} ₽`;
+        totalParts += sum;
+      });
+
+      const totalSum = totalWorks + totalParts;
+      document.getElementById('totalWorks').textContent = `${totalWorks.toFixed(2)} ₽`;
+      document.getElementById('totalParts').textContent = `${totalParts.toFixed(2)} ₽`;
+      document.getElementById('totalSum').textContent = `${totalSum.toFixed(2)} ₽`;
+    }
+
+    // ========== Основные функции ==========
+    async function login() {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginBtn');
+
+      if (!email || !password) {
+        alert('Пожалуйста, введите email и пароль');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span style="display:inline-block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite"></span>';
+
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          alert('Ошибка входа: ' + error.message);
+          btn.disabled = false;
+          btn.textContent = 'Войти';
+        } else {
+          checkUser();
+        }
+      } catch (err) {
+        alert('Ошибка: ' + err.message);
         btn.disabled = false;
         btn.textContent = 'Войти';
-      } else {
-        checkUser();
       }
-    } catch (err) {
-      alert('Ошибка: ' + err.message);
-      btn.disabled = false;
-      btn.textContent = 'Войти';
-    }
-  }
-
-  async function logout() {
-    await supabaseClient.auth.signOut();
-    checkUser();
-  }
-
-  async function checkUser() {
-    const { data, error } = await supabaseClient.auth.getUser();
-    const loginScreen = document.getElementById('loginScreen');
-    const mainScreen = document.getElementById('mainScreen');
-    const userInfo = document.getElementById('userInfo');
-
-    if (error || !data?.user) {
-      loginScreen.classList.remove('hide');
-      mainScreen.classList.add('hide');
-      userInfo.textContent = '';
-    } else {
-      loginScreen.classList.add('hide');
-      mainScreen.classList.remove('hide');
-      userInfo.textContent = data.user.email;
-      loadClaims();
-    }
-  }
-
-  function showSearchScreen() {
-    document.getElementById('mainScreen').classList.add('hide');
-    document.getElementById('searchScreen').classList.remove('hide');
-  }
-
-  function showMainScreen() {
-    document.getElementById('searchScreen').classList.add('hide');
-    document.getElementById('mainScreen').classList.remove('hide');
-  }
-
-  async function loadClaims() {
-    const { data, error } = await supabaseClient
-      .from('claims')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    const claimsBody = document.getElementById('claimsBody');
-
-    if (error) {
-      claimsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#e74c3c;padding:20px;">Ошибка загрузки: ${error.message}</td></tr>`;
-      return;
     }
 
-    if (!data || data.length === 0) {
-      claimsBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
-      return;
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      checkUser();
     }
 
-    claimsBody.innerHTML = data.map(claim => `
-      <tr>
-        <td>${claim.number || '-'}</td>
-        <td>${new Date(claim.created_at).toLocaleString()}</td>
-        <td>${claim.car_number || '-'}</td>
-        <td>${claim.client_fio}</td>
-        <td>${claim.phone}</td>
-        <td><span class="status status-${claim.status}">${claim.status}</span></td>
-        <td>
-          <button class="btn btn-secondary" onclick="editClaim('${claim.id}')">Редактировать</button>
-        </td>
-      </tr>
-    `).join('');
-  }
+    async function checkUser() {
+      const { data, error } = await supabaseClient.auth.getUser();
+      const loginScreen = document.getElementById('loginScreen');
+      const mainScreen = document.getElementById('mainScreen');
+      const userInfo = document.getElementById('userInfo');
 
-  function searchByCar() { alert('Поиск пока не реализован'); }
-
-  async function saveClaim(event) {
-    event.preventDefault();
-
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !user) {
-      alert('Сначала войдите в систему');
-      return;
+      if (error || !data?.user) {
+        loginScreen.classList.remove('hide');
+        mainScreen.classList.add('hide');
+        userInfo.textContent = '';
+      } else {
+        loginScreen.classList.add('hide');
+        mainScreen.classList.remove('hide');
+        userInfo.textContent = data.user.email;
+        loadClaims();
+      }
     }
 
-    // Сбор данных описания проблем (для сохранения)
-    const complaint = [];
-    document.querySelectorAll('#complaintBody tr').forEach(tr => {
-      const inputs = tr.querySelectorAll('input, select');
-      const name = inputs[0].value;
-      if (!name) return;
-      complaint.push({
-        name: name,
-        side: inputs[1].value,
-        position: inputs[2].value,
-        quantity: parseInt(inputs[3].value) || 1
+    function showSearchScreen() {
+      document.getElementById('mainScreen').classList.add('hide');
+      document.getElementById('searchScreen').classList.remove('hide');
+    }
+
+    function showMainScreen() {
+      document.getElementById('searchScreen').classList.add('hide');
+      document.getElementById('mainScreen').classList.remove('hide');
+    }
+
+    async function loadClaims() {
+      const { data, error } = await supabaseClient
+        .from('claims')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const claimsBody = document.getElementById('claimsBody');
+
+      if (error) {
+        claimsBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#e74c3c;padding:20px;">Ошибка загрузки: ${error.message}</td></tr>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        claimsBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
+        return;
+      }
+
+      claimsBody.innerHTML = data.map(claim => `
+        <tr>
+          <td>${claim.number || '-'}</td>
+          <td>${new Date(claim.created_at).toLocaleString()}</td>
+          <td>${claim.car_number || '-'}</td>
+          <td>${claim.car_brand || '-'} ${claim.car_model || ''}</td>
+          <td>${claim.client_fio}</td>
+          <td>${claim.phone}</td>
+          <td><span class="status status-${claim.status}">${claim.status}</span></td>
+          <td>
+            <button class="btn btn-secondary" onclick="editClaim('${claim.id}')">Редактировать</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function searchByCar() { alert('Поиск пока не реализован'); }
+
+    async function saveClaim(event) {
+      event.preventDefault();
+
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      if (userError || !user) {
+        alert('Сначала войдите в систему');
+        return;
+      }
+
+      const complaint = [];
+      document.querySelectorAll('#complaintBody tr').forEach(tr => {
+        const inputs = tr.querySelectorAll('input, select');
+        const name = inputs[0].value;
+        if (!name) return;
+        complaint.push({
+          name: name,
+          side: inputs[1].value,
+          position: inputs[2].value,
+          quantity: parseInt(inputs[3].value) || 1
+        });
       });
-    });
 
-    // Сбор данных работ
-    const works = [];
-    document.querySelectorAll('#worksBody tr').forEach(tr => {
-      const inputs = tr.querySelectorAll('input, select');
-      const name = inputs[0].value;
-      if (!name) return;
-      works.push({
-        name: name,
-        side: inputs[1].value,
-        position: inputs[2].value,
-        quantity: parseInt(inputs[3].value) || 1,
-        price: parseFloat(inputs[4].value) || 0
+      const works = [];
+      document.querySelectorAll('#worksBody tr').forEach(tr => {
+        const inputs = tr.querySelectorAll('input, select');
+        const name = inputs[0].value;
+        if (!name) return;
+        works.push({
+          name: name,
+          side: inputs[1].value,
+          position: inputs[2].value,
+          quantity: parseInt(inputs[3].value) || 1,
+          price: parseFloat(inputs[4].value) || 0
+        });
       });
-    });
 
-    // Сбор данных запчастей
-    const parts = [];
-    document.querySelectorAll('#partsBody tr').forEach(tr => {
-      const inputs = tr.querySelectorAll('input, select');
-      const article = inputs[0].value;
-      const name = inputs[1].value;
-      if (!article && !name) return;
-      parts.push({
-        article: article,
-        name: name,
-        side: inputs[2].value,
-        position: inputs[3].value,
-        quantity: parseInt(inputs[4].value) || 1,
-        price: parseFloat(inputs[5].value) || 0
+      const parts = [];
+      document.querySelectorAll('#partsBody tr').forEach(tr => {
+        const inputs = tr.querySelectorAll('input, select');
+        const article = inputs[0].value;
+        const name = inputs[1].value;
+        if (!article && !name) return;
+        parts.push({
+          article: article,
+          name: name,
+          side: inputs[2].value,
+          position: inputs[3].value,
+          quantity: parseInt(inputs[4].value) || 1,
+          price: parseFloat(inputs[5].value) || 0
+        });
       });
-    });
 
-    const claimData = {
-      car_number: document.getElementById('carNumber').value,
-      car_brand: document.getElementById('carBrand').value, // ← Обязательное поле
-      vin: document.getElementById('vin').value,
-      mileage: parseInt(document.getElementById('mileage').value) || null,
-      client_fio: document.getElementById('clientFio').value,
-      client_company: document.getElementById('clientCompany').value,
-      phone: document.getElementById('phone').value,
-      complaint: complaint, // Сохраняем описание проблем
-      status: document.getElementById('status').value,
-      works: works,
-      parts: parts,
-      user_id: user.id,
-      number: document.getElementById('claimNumber').value // ← Добавляем номер
-    };
+      const claimData = {
+        car_number: document.getElementById('carNumber').value,
+        car_brand: document.getElementById('carBrand').value,
+        car_model: document.getElementById('carModel').value,
+        vin: document.getElementById('vin').value,
+        mileage: parseInt(document.getElementById('mileage').value) || null,
+        client_fio: document.getElementById('clientFio').value,
+        client_company: document.getElementById('clientCompany').value,
+        phone: document.getElementById('phone').value,
+        complaint: complaint,
+        status: document.getElementById('status').value,
+        works: works,
+        parts: parts,
+        user_id: user.id,
+        number: document.getElementById('claimNumber').value
+      };
 
-    const claimId = document.getElementById('claimId').value;
-    let result;
-    if (claimId) {
-      result = await supabaseClient.from('claims').update(claimData).eq('id', claimId);
-    } else {
-      result = await supabaseClient.from('claims').insert([claimData]);
+      const claimId = document.getElementById('claimId').value;
+      let result;
+      if (claimId) {
+        result = await supabaseClient.from('claims').update(claimData).eq('id', claimId);
+      } else {
+        result = await supabaseClient.from('claims').insert([claimData]);
+      }
+
+      if (result.error) {
+        alert('Ошибка: ' + result.error.message);
+      } else {
+        alert('Заявка сохранена!');
+        closeModal();
+        loadClaims();
+      }
     }
 
-    if (result.error) {
-      alert('Ошибка: ' + result.error.message);
-    } else {
-      alert('Заявка сохранена!');
-      closeModal();
-      loadClaims();
+    function showClaimForm() {
+      document.getElementById('claimId').value = '';
+      document.getElementById('modalTitle').textContent = 'Новая заявка';
+      document.getElementById('carNumber').value = '';
+      document.getElementById('carBrand').value = '';
+      document.getElementById('carModel').value = '';
+      document.getElementById('vin').value = '';
+      document.getElementById('mileage').value = '';
+      document.getElementById('clientFio').value = '';
+      document.getElementById('clientCompany').value = '';
+      document.getElementById('phone').value = '';
+
+      const claimNumber = generateClaimNumber();
+      document.getElementById('claimNumber').value = claimNumber;
+
+      document.getElementById('complaintBody').innerHTML = '';
+      document.getElementById('worksBody').innerHTML = '';
+      document.getElementById('partsBody').innerHTML = '';
+      addComplaintRow();
+      addWorkRow();
+      addPartRow();
+
+      document.getElementById('status').value = 'draft';
+      calculateTotals();
+
+      document.getElementById('claimModal').classList.add('show');
     }
-  }
 
-  function showClaimForm() {
-    document.getElementById('claimId').value = '';
-    document.getElementById('modalTitle').textContent = 'Новая заявка';
-    document.getElementById('carNumber').value = '';
-    document.getElementById('carBrand').value = ''; // ← Обязательное поле
-    document.getElementById('vin').value = '';
-    document.getElementById('mileage').value = '';
-    document.getElementById('clientFio').value = '';
-    document.getElementById('clientCompany').value = '';
-    document.getElementById('phone').value = '';
+    function editClaim(id) {
+      alert('Редактирование заявки ' + id + ' — в разработке');
+    }
 
-    // Генерируем номер заявки
-    const claimNumber = generateClaimNumber();
-    document.getElementById('claimNumber').value = claimNumber;
+    function closeModal() {
+      document.getElementById('claimModal').classList.remove('show');
+    }
 
-    // Очистка таблиц
-    document.getElementById('complaintBody').innerHTML = '';
-    document.getElementById('worksBody').innerHTML = '';
-    document.getElementById('partsBody').innerHTML = '';
-    addComplaintRow();
-    addWorkRow();
-    addPartRow();
+    function printClaim() {
+      window.print();
+    }
 
-    document.getElementById('status').value = 'draft';
-    calculateTotals();
-
-    document.getElementById('claimModal').classList.add('show');
-  }
-
-  function editClaim(id) {
-    alert('Редактирование заявки ' + id + ' — в разработке');
-  }
-
-  function closeModal() {
-    document.getElementById('claimModal').classList.remove('show');
-  }
-
-  function printClaim() {
-    window.print();
-  }
-
-  // ========== Инициализация ==========
-  document.addEventListener('DOMContentLoaded', () => {
-    // Кнопки
-    document.getElementById('loginBtn').addEventListener('click', login);
-    document.getElementById('logoutBtn').addEventListener('click', logout);
-    document.getElementById('searchBtn').addEventListener('click', searchByCar);
-    document.getElementById('searchByCarBtn').addEventListener('click', showSearchScreen);
-    document.getElementById('backToMainBtn').addEventListener('click', showMainScreen);
-    document.getElementById('createClaimBtn').addEventListener('click', showClaimForm);
-    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-    document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-    document.getElementById('printBtn').addEventListener('click', printClaim);
-    document.getElementById('addComplaintBtn').addEventListener('click', () => addComplaintRow());
-    document.getElementById('addWorkBtn').addEventListener('click', () => addWorkRow());
-    document.getElementById('addPartBtn').addEventListener('click', () => addPartRow());
-    document.getElementById('claimForm').addEventListener('submit', saveClaim);
-
-    // Закрытие модалки по клику на фон
-    document.getElementById('claimModal').addEventListener('click', (e) => {
-      if (e.target.id === 'claimModal') closeModal();
+    // ========== Инициализация ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('loginBtn').addEventListener('click', login);
+      document.getElementById('logoutBtn').addEventListener('click', logout);
+      document.getElementById('searchBtn').addEventListener('click', searchByCar);
+      document.getElementById('searchByCarBtn').addEventListener('click', showSearchScreen);
+      document.getElementById('backToMainBtn').addEventListener('click', showMainScreen);
+      document.getElementById('createClaimBtn').addEventListener('click', showClaimForm);
+      document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+      document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
+      document.getElementById('printBtn').addEventListener('click', printClaim);
+      document.getElementById('addComplaintBtn').addEventListener('click', () => addComplaintRow());
+      document.getElementById('addWorkBtn').addEventListener('click', () => addWorkRow());
+      document.getElementById('addPartBtn').addEventListener('click', () => addPartRow());
+      document.getElementById('claimForm').addEventListener('submit', saveClaim);
+      document.getElementById('claimModal').addEventListener('click', (e) => {
+        if (e.target.id === 'claimModal') closeModal();
+      });
+      checkUser();
     });
-
-    // Инициализация
-    checkUser();
-  });
-</script>
+  </script>
 </body>
 </html>
