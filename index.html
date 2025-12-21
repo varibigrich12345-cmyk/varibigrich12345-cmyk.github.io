@@ -918,7 +918,7 @@
 
     const claimData = {
       car_number: document.getElementById('carNumber').value,
-      car_brand: document.getElementById('carBrand').value,
+      car_brand: document.getElementById('carBrand').value, // ← Обязательное поле
       vin: document.getElementById('vin').value,
       mileage: parseInt(document.getElementById('mileage').value) || null,
       client_fio: document.getElementById('clientFio').value,
@@ -953,7 +953,7 @@
     document.getElementById('claimId').value = '';
     document.getElementById('modalTitle').textContent = 'Новая заявка';
     document.getElementById('carNumber').value = '';
-    document.getElementById('carBrand').value = '';
+    document.getElementById('carBrand').value = ''; // ← Обязательное поле
     document.getElementById('vin').value = '';
     document.getElementById('mileage').value = '';
     document.getElementById('clientFio').value = '';
