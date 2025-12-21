@@ -445,6 +445,9 @@
       </div>
       <div class="modal-body">
         <form id="claimForm">
+          <!-- Скрытый инпут для номера -->
+          <!-- Скрытый инпут для номера (автоматически генерируется) -->
+          <input type="hidden" id="claimNumber" name="number">
           <input type="hidden" id="claimId">
           
           <!-- Блок клиента и авто -->
@@ -608,6 +611,15 @@
     return select;
   }
 
+  function generateClaimNumber() {
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `CLAIM-${year}${month}${day}-${random}`;
+  }
+
   function addComplaintRow(data = null) {
     const tbody = document.getElementById('complaintBody');
     const tr = document.createElement('tr');
@@ -627,7 +639,7 @@
       calculateTotals();
     };
 
-    // ✅ Обработчик для поля "Наименование" — синхронизируем при вводе
+    // Обработчик для поля "Наименование"
     const nameInput = tr.querySelector('input[type="text"]');
     nameInput.addEventListener('input', () => {
       syncComplaintToWorks();
@@ -636,7 +648,7 @@
     tbody.appendChild(tr);
     attachInputEvents(tr);
 
-    // ✅ Автоматически синхронизируем после добавления строки
+    // Автоматически синхронизируем после добавления строки
     syncComplaintToWorks();
   }
 
@@ -815,7 +827,36 @@
   }
 
   async function loadClaims() {
-    document.getElementById('claimsBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
+    const { data, error } = await supabaseClient
+      .from('claims')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    const claimsBody = document.getElementById('claimsBody');
+
+    if (error) {
+      claimsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#e74c3c;padding:20px;">Ошибка загрузки: ${error.message}</td></tr>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      claimsBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
+      return;
+    }
+
+    claimsBody.innerHTML = data.map(claim => `
+      <tr>
+        <td>${claim.number || '-'}</td>
+        <td>${new Date(claim.created_at).toLocaleString()}</td>
+        <td>${claim.car_number || '-'}</td>
+        <td>${claim.client_fio}</td>
+        <td>${claim.phone}</td>
+        <td><span class="status status-${claim.status}">${claim.status}</span></td>
+        <td>
+          <button class="btn btn-secondary" onclick="editClaim('${claim.id}')">Редактировать</button>
+        </td>
+      </tr>
+    `).join('');
   }
 
   function searchByCar() { alert('Поиск пока не реализован'); }
@@ -887,7 +928,8 @@
       status: document.getElementById('status').value,
       works: works,
       parts: parts,
-      user_id: user.id
+      user_id: user.id,
+      number: document.getElementById('claimNumber').value // ← Добавляем номер
     };
 
     const claimId = document.getElementById('claimId').value;
@@ -918,6 +960,10 @@
     document.getElementById('clientCompany').value = '';
     document.getElementById('phone').value = '';
 
+    // Генерируем номер заявки
+    const claimNumber = generateClaimNumber();
+    document.getElementById('claimNumber').value = claimNumber;
+
     // Очистка таблиц
     document.getElementById('complaintBody').innerHTML = '';
     document.getElementById('worksBody').innerHTML = '';
@@ -930,6 +976,10 @@
     calculateTotals();
 
     document.getElementById('claimModal').classList.add('show');
+  }
+
+  function editClaim(id) {
+    alert('Редактирование заявки ' + id + ' — в разработке');
   }
 
   function closeModal() {
