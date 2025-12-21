@@ -456,11 +456,11 @@
               <label>Госномер *</label>
               <input type="text" id="carNumber" required>
             </div>
-            <div class="form-group">
-              <label>Марка/Модель</label>
-              <input type="text" id="carBrand">
-            </div>
-          </div>
+            
+           <div class="form-group">
+            <label>Марка/Модель *</label>
+            <input type="text" id="carBrand" required>
+           </div>
 
           <div class="form-row">
             <div class="form-group">
@@ -620,11 +620,38 @@
     return `CLAIM-${year}${month}${day}-${random}`;
   }
 
+  // ========== Автозаполнение для работ и запчастей ==========
+  const workSuggestions = [
+    "Замена шаровой опоры",
+    "Замена тормозных колодок",
+    "Замена масла в двигателе",
+    "Замена свечей зажигания",
+    "Замена ремня ГРМ",
+    "Замена амортизатора",
+    "Замена рулевой рейки",
+    "Замена подшипника ступицы",
+    "Замена тормозного шланга",
+    "Замена радиатора"
+  ];
+
+  const partSuggestions = [
+    "Опора шаровая",
+    "Колодки тормозные",
+    "Масло моторное",
+    "Свечи зажигания",
+    "Ремень ГРМ",
+    "Амортизатор",
+    "Рейка рулевая",
+    "Подшипник ступицы",
+    "Шланг тормозной",
+    "Радиатор"
+  ];
+
   function addComplaintRow(data = null) {
     const tbody = document.getElementById('complaintBody');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" placeholder="Наименование работы" value="${data?.name || ''}"></td>
+      <td><input type="text" list="workList" placeholder="Наименование работы" value="${data?.name || ''}"></td>
       <td></td>
       <td></td>
       <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
@@ -656,7 +683,7 @@
     const tbody = document.getElementById('worksBody');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" placeholder="Наименование работы" value="${data?.name || ''}"></td>
+      <td><input type="text" list="workList" placeholder="Наименование работы" value="${data?.name || ''}"></td>
       <td></td>
       <td></td>
       <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
@@ -679,8 +706,8 @@
     const tbody = document.getElementById('partsBody');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><input type="text" placeholder="Артикул" value="${data?.article || ''}"></td>
-      <td><input type="text" placeholder="Наименование" value="${data?.name || ''}"></td>
+      <td><input type="text" list="partList" placeholder="Артикул" value="${data?.article || ''}"></td>
+      <td><input type="text" list="partList" placeholder="Наименование" value="${data?.name || ''}"></td>
       <td></td>
       <td></td>
       <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
