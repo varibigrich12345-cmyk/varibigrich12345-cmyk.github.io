@@ -1,560 +1,578 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</title>
+  <!-- Убраны пробелы в версии -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ... твой CSS без изменений ... */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  background: #f5f5f5;
-  padding: 10px;
-}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 10px;
+    }
 
-.hide {
-  display: none !important;
-}
+    .hide {
+      display: none !important;
+    }
 
-.app {
-  max-width: 1400px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
 
-.header {
-  background: #2c3e50;
-  color: white;
-  padding: 15px 20px;
-  border-radius: 8px 8px 0 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-.header h1 {
-  font-size: 20px;
-}
+    .header h1 {
+      font-size: 20px;
+    }
 
-.user-info {
-  font-size: 14px;
-}
+    .user-info {
+      font-size: 14px;
+    }
 
-.btn {
-  padding: 10px 20px;
-  margin: 5px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s;
-}
+    .btn {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
 
-.btn-primary {
-  background: #3498db;
-  color: white;
-}
+    .btn-primary {
+      background: #3498db;
+      color: white;
+    }
 
-.btn-primary:hover {
-  background: #2980b9;
-}
+    .btn-primary:hover {
+      background: #2980b9;
+    }
 
-.btn-success {
-  background: #27ae60;
-  color: white;
-}
+    .btn-success {
+      background: #27ae60;
+      color: white;
+    }
 
-.btn-success:hover {
-  background: #229954;
-}
+    .btn-success:hover {
+      background: #229954;
+    }
 
-.btn-danger {
-  background: #e74c3c;
-  color: white;
-}
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
 
-.btn-danger:hover {
-  background: #c0392b;
-}
+    .btn-danger:hover {
+      background: #c0392b;
+    }
 
-.btn-secondary {
-  background: #95a5a6;
-  color: white;
-}
+    .btn-secondary {
+      background: #95a5a6;
+      color: white;
+    }
 
-.btn-secondary:hover {
-  background: #7f8c8d;
-}
+    .btn-secondary:hover {
+      background: #7f8c8d;
+    }
 
-.btn-warning {
-  background: #f39c12;
-  color: white;
-}
+    .btn-warning {
+      background: #f39c12;
+      color: white;
+    }
 
-.btn-warning:hover {
-  background: #e67e22;
-}
+    .btn-warning:hover {
+      background: #e67e22;
+    }
 
-.search-screen {
-  padding: 60px 20px;
-  text-align: center;
-}
+    .search-screen {
+      padding: 60px 20px;
+      text-align: center;
+    }
 
-.search-screen h2 {
-  margin-bottom: 30px;
-  color: #2c3e50;
-}
+    .search-screen h2 {
+      margin-bottom: 30px;
+      color: #2c3e50;
+    }
 
-.search-box {
-  max-width: 500px;
-  margin: 0 auto 40px;
-  display: flex;
-  gap: 10px;
-}
+    .search-box {
+      max-width: 500px;
+      margin: 0 auto 40px;
+      display: flex;
+      gap: 10px;
+    }
 
-.search-box input {
-  flex: 1;
-  padding: 15px;
-  font-size: 16px;
-  border: 2px solid #ddd;
-  border-radius: 4px;
-}
+    .search-box input {
+      flex: 1;
+      padding: 15px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+    }
 
-.search-results {
-  background: #ecf0f1;
-  padding: 20px;
-  margin: 20px auto;
-  max-width: 800px;
-  border-radius: 8px;
-  text-align: left;
-}
+    .search-results {
+      background: #ecf0f1;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 800px;
+      border-radius: 8px;
+      text-align: left;
+    }
 
-.result-item {
-  margin: 10px 0;
-  padding: 15px;
-  background: white;
-  border-radius: 4px;
-  border-left: 4px solid #3498db;
-}
+    .result-item {
+      margin: 10px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 4px;
+      border-left: 4px solid #3498db;
+    }
 
-.result-item h4 {
-  margin-bottom: 10px;
-  color: #2c3e50;
-}
+    .result-item h4 {
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
 
-.result-item p {
-  margin: 5px 0;
-  font-size: 14px;
-  color: #555;
-}
+    .result-item p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #555;
+    }
 
-.toolbar {
-  padding: 15px 20px;
-  background: #ecf0f1;
-  border-bottom: 1px solid #bdc3c7;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-}
+    .toolbar {
+      padding: 15px 20px;
+      background: #ecf0f1;
+      border-bottom: 1px solid #bdc3c7;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
 
-.toolbar-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-}
+    .toolbar-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
 
-.content {
-  padding: 20px;
-}
+    .content {
+      padding: 20px;
+    }
 
-.table-container {
-  overflow-x: auto;
-}
+    .table-container {
+      overflow-x: auto;
+    }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #ecf0f1;
-}
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ecf0f1;
+    }
 
-th {
-  background: #34495e;
-  color: white;
-  font-weight: 600;
-}
+    th {
+      background: #34495e;
+      color: white;
+      font-weight: 600;
+    }
 
-tr:hover {
-  background: #f8f9fa;
-}
+    tr:hover {
+      background: #f8f9fa;
+    }
 
-.status {
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
+    .status {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
 
-.status-draft {
-  background: #ecf0f1;
-  color: #7f8c8d;
-}
+    .status-draft {
+      background: #ecf0f1;
+      color: #7f8c8d;
+    }
 
-.status-agreed {
-  background: #d1ecf1;
-  color: #0c5460;
-}
+    .status-agreed {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
 
-.status-in_progress {
-  background: #fff3cd;
-  color: #856404;
-}
+    .status-in_progress {
+      background: #fff3cd;
+      color: #856404;
+    }
 
-.status-completed {
-  background: #d4edda;
-  color: #155724;
-}
+    .status-completed {
+      background: #d4edda;
+      color: #155724;
+    }
 
-.form-container {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
+    .form-container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
 
-.form-group {
-  margin: 15px 0;
-}
+    .form-group {
+      margin: 15px 0;
+    }
 
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 600;
-  color: #2c3e50;
-}
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
 
-.form-group textarea {
-  min-height: 80px;
-  resize: vertical;
-}
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
 
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  overflow-y: auto;
-}
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      overflow-y: auto;
+    }
 
-.modal.show {
-  display: flex;
-  align-items: start;
-  justify-content: center;
-  padding: 20px;
-}
+    .modal.show {
+      display: flex;
+      align-items: start;
+      justify-content: center;
+      padding: 20px;
+    }
 
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  max-width: 900px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
 
-.modal-header {
-  padding: 20px;
-  border-bottom: 1px solid #ecf0f1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #ecf0f1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-.modal-body {
-  padding: 20px;
-}
+    .modal-body {
+      padding: 20px;
+    }
 
-.close {
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-  color: #7f8c8d;
-}
+    .close {
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #7f8c8d;
+    }
 
-.close:hover {
-  color: #2c3e50;
-}
+    .close:hover {
+      color: #2c3e50;
+    }
 
-@media print {
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
-}
-</style>
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+    }
+
+    /* ✅ ДОБАВЛЕНО: анимация spin */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <h1>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</h1>
-    <div class="user-info" id="userInfo"></div>
-  </div>
-
-  <!-- Login Screen -->
-  <div id="loginScreen" class="search-screen">
-    <h2>Вход в систему</h2>
-    <div class="form-container">
-      <div class="form-group">
-        <input type="email" id="loginEmail" placeholder="Email">
-      </div>
-      <div class="form-group">
-        <input type="password" id="loginPassword" placeholder="Пароль">
-      </div>
-      <button class="btn btn-primary" onclick="login()">Войти</button>
+  <div class="app">
+    <div class="header">
+      <h1>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</h1>
+      <div class="user-info" id="userInfo"></div>
     </div>
-  </div>
 
-  <!-- Search Screen -->
-  <div id="searchScreen" class="search-screen hide">
-    <h2>Поиск по госномеру</h2>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Введите госномер (например: А123АА77)">
-      <button class="btn btn-primary" onclick="searchByCar()">Поиск</button>
-    </div>
-    <div id="searchResults"></div>
-    <button class="btn btn-secondary" onclick="showMainScreen()">К списку заявок</button>
-  </div>
-
-  <!-- Main Screen -->
-  <div id="mainScreen" class="hide">
-    <div class="toolbar">
-      <div class="toolbar-title">Заявки на ремонт</div>
-      <div>
-        <button class="btn btn-success" onclick="showClaimForm()">+ Создать заявку</button>
-        <button class="btn btn-secondary" onclick="showSearchScreen()">Поиск по госномеру</button>
-        <button class="btn btn-danger" onclick="logout()">Выход</button>
-      </div>
-    </div>
-    <div class="content">
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Номер</th>
-              <th>Дата</th>
-              <th>Госномер</th>
-              <th>Клиент</th>
-              <th>Телефон</th>
-              <th>Статус</th>
-              <th>Действия</th>
-            </tr>
-          </thead>
-          <tbody id="claimsBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Claim Modal -->
-<div id="claimModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 id="modalTitle">Новая заявка</h2>
-      <span class="close" onclick="closeModal()">&times;</span>
-    </div>
-    <div class="modal-body">
-      <form id="claimForm" onsubmit="saveClaim(event)">
-        <input type="hidden" id="claimId">
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label>Госномер *</label>
-            <input type="text" id="carNumber" required>
-          </div>
-          <div class="form-group">
-            <label>Марка/Модель</label>
-            <input type="text" id="carBrand">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>VIN</label>
-            <input type="text" id="vin">
-          </div>
-          <div class="form-group">
-            <label>Пробег (км)</label>
-            <input type="number" id="mileage">
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>ФИО клиента *</label>
-            <input type="text" id="clientFio" required>
-          </div>
-          <div class="form-group">
-            <label>Компания</label>
-            <input type="text" id="clientCompany">
-          </div>
-        </div>
-
+    <!-- Login Screen -->
+    <div id="loginScreen" class="search-screen">
+      <h2>Вход в систему</h2>
+      <div class="form-container">
         <div class="form-group">
-          <label>Телефон *</label>
-          <input type="tel" id="phone" required>
+          <input type="email" id="loginEmail" placeholder="Email">
         </div>
-
         <div class="form-group">
-          <label>Описание проблемы</label>
-          <textarea id="complaint"></textarea>
+          <input type="password" id="loginPassword" placeholder="Пароль">
         </div>
+        <!-- ✅ Исправлено: передаём event -->
+        <button class="btn btn-primary" onclick="login(event)">Войти</button>
+      </div>
+    </div>
 
-        <div class="form-group">
-          <label>Статус</label>
-          <select id="status">
-            <option value="draft">Черновик</option>
-            <option value="agreed">Подтверждена</option>
-            <option value="in_progress">В работе</option>
-            <option value="completed">Завершена</option>
-          </select>
-        </div>
+    <!-- Search Screen -->
+    <div id="searchScreen" class="search-screen hide">
+      <h2>Поиск по госномеру</h2>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Введите госномер (например: А123АА77)">
+        <button class="btn btn-primary" onclick="searchByCar()">Поиск</button>
+      </div>
+      <div id="searchResults"></div>
+      <button class="btn btn-secondary" onclick="showMainScreen()">К списку заявок</button>
+    </div>
 
-        <div style="margin-top:20px">
-          <button type="submit" class="btn btn-success">Сохранить</button>
-          <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
-          <button type="button" class="btn btn-warning" onclick="exportToCSV()" style="display:none" id="exportBtn">Экспорт CSV</button>
-          <button type="button" class="btn btn-primary" onclick="printClaim()" style="display:none" id="printBtn">Печать</button>
+    <!-- Main Screen -->
+    <div id="mainScreen" class="hide">
+      <div class="toolbar">
+        <div class="toolbar-title">Заявки на ремонт</div>
+        <div>
+          <button class="btn btn-success" onclick="showClaimForm()">+ Создать заявку</button>
+          <button class="btn btn-secondary" onclick="showSearchScreen()">Поиск по госномеру</button>
+          <button class="btn btn-danger" onclick="logout()">Выход</button>
         </div>
-      </form>
+      </div>
+      <div class="content">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Номер</th>
+                <th>Дата</th>
+                <th>Госномер</th>
+                <th>Клиент</th>
+                <th>Телефон</th>
+                <th>Статус</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="claimsBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
+  <!-- Claim Modal -->
+  <div id="claimModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Новая заявка</h2>
+        <span class="close" onclick="closeModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="claimForm" onsubmit="saveClaim(event)">
+          <input type="hidden" id="claimId">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Госномер *</label>
+              <input type="text" id="carNumber" required>
+            </div>
+            <div class="form-group">
+              <label>Марка/Модель</label>
+              <input type="text" id="carBrand">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>VIN</label>
+              <input type="text" id="vin">
+            </div>
+            <div class="form-group">
+              <label>Пробег (км)</label>
+              <input type="number" id="mileage">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>ФИО клиента *</label>
+              <input type="text" id="clientFio" required>
+            </div>
+            <div class="form-group">
+              <label>Компания</label>
+              <input type="text" id="clientCompany">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Телефон *</label>
+            <input type="tel" id="phone" required>
+          </div>
+          <div class="form-group">
+            <label>Описание проблемы</label>
+            <textarea id="complaint"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Статус</label>
+            <select id="status">
+              <option value="draft">Черновик</option>
+              <option value="agreed">Подтверждена</option>
+              <option value="in_progress">В работе</option>
+              <option value="completed">Завершена</option>
+            </select>
+          </div>
+          <div style="margin-top:20px">
+            <button type="submit" class="btn btn-success">Сохранить</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+            <button type="button" class="btn btn-warning" onclick="exportToCSV()" style="display:none" id="exportBtn">Экспорт CSV</button>
+            <button type="button" class="btn btn-primary" onclick="printClaim()" style="display:none" id="printBtn">Печать</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
-  // Supabase configuration
-const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwNDkwNzIsImV4cCI6MjA0ODYyNTA3Mn0.gU3mIBV1iCR4NcdJ9WHhIILjAGFcD2Z-D4A4yBBKDwM';
+  <script>
+    // Supabase configuration — ✅ убраны пробелы
+    const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwNDkwNzIsImV4cCI6MjA0ODYyNTA3Mn0.gU3mIBV1iCR4NcdJ9WHhIILjAGFcD2Z-D4A4yBBKDwM';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  
-  async function login() {
-      // Login function
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const btn = event.target;
-    
-    if (!email || !password) {
+
+    // ✅ Исправлено: принимаем event
+    async function login(event) {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const btn = event.target;
+
+      if (!email || !password) {
         alert('Пожалуйста, введите email и пароль');
         return;
-    }
-    
-    btn.disabled = true;
-    btn.innerHTML = '<span style="display:inline-block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite"></span>';
-    
-    try {
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span style="display:inline-block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite"></span>';
+
+      try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
+          email: email,
+          password: password
         });
-        
+
         if (error) {
-            alert('Ошибка входа: ' + error.message);
-            btn.disabled = false;
-            btn.textContent = 'Войти';
+          alert('Ошибка входа: ' + error.message);
+          btn.disabled = false;
+          btn.textContent = 'Войти';
         } else {
-            console.log('Успешный вход:', data);
-            checkUser();
+          console.log('Успешный вход:', data);
+          checkUser();
         }
-    } catch (err) {
+      } catch (err) {
         alert('Ошибка: ' + err.message);
         btn.disabled = false;
         btn.textContent = 'Войти';
+      }
     }
-}
 
-// Logout function
-async function logout() {
-    await supabaseClient.auth.signOut();
-    checkUser();
-}
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      checkUser();
+    }
 
-// Check user authentication
-async function checkUser() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    
-    const loginScreen = document.getElementById('loginScreen');
-    const mainScreen = document.getElementById('mainScreen');
-    const userInfo = document.getElementById('userInfo');
-    
-    if (user) {
-        loginScreen.classList.add('hide');
-        mainScreen.classList.remove('hide');
-        userInfo.textContent = user.email;
-        loadClaims();
-    } else {
+    // ✅ Исправлено: безопасная деструктуризация
+    async function checkUser() {
+      const { data, error } = await supabaseClient.auth.getUser();
+
+      const loginScreen = document.getElementById('loginScreen');
+      const mainScreen = document.getElementById('mainScreen');
+      const userInfo = document.getElementById('userInfo');
+
+      if (error || !data?.user) {
+        // Не авторизован
         loginScreen.classList.remove('hide');
         mainScreen.classList.add('hide');
         userInfo.textContent = '';
+      } else {
+        // Авторизован
+        loginScreen.classList.add('hide');
+        mainScreen.classList.remove('hide');
+        userInfo.textContent = data.user.email;
+        loadClaims();
+      }
     }
-}
 
-// Show search screen
-function showSearchScreen() {
-    document.getElementById('mainScreen').classList.add('hide');
-    document.getElementById('searchScreen').classList.remove('hide');
-}
+    function showSearchScreen() {
+      document.getElementById('mainScreen').classList.add('hide');
+      document.getElementById('searchScreen').classList.remove('hide');
+    }
 
-// Show main screen
-function showMainScreen() {
-    document.getElementById('searchScreen').classList.add('hide');
-    document.getElementById('mainScreen').classList.remove('hide');
-}
+    function showMainScreen() {
+      document.getElementById('searchScreen').classList.add('hide');
+      document.getElementById('mainScreen').classList.remove('hide');
+    }
 
-// Load claims placeholder
-async function loadClaims() {
-    console.log('Загрузка заявок...');
-    // TODO: Implement claims loading from Supabase
-}
+    // ✅ Исправлено: заглушка вместо пустой таблицы
+    async function loadClaims() {
+      document.getElementById('claimsBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
+    }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', checkUser);
+    // 🔜 Заглушки для недостающих функций (чтобы не было ошибок)
+    function searchByCar() { alert('Поиск пока не реализован'); }
+    function showClaimForm() { alert('Создание заявки — в разработке'); }
+    function saveClaim(event) { event.preventDefault(); alert('Сохранение — в разработке'); }
+    function exportToCSV() { alert('Экспорт CSV — в разработке'); }
+    function printClaim() { alert('Печать — в разработке'); }
+
+    // ✅ Улучшено: закрытие по клику на фон
+    function closeModal() {
+      const modal = document.getElementById('claimModal');
+      modal.classList.remove('show');
+    }
+
+    // Добавляем обработчик клика по фону
+    document.getElementById('claimModal').addEventListener('click', (e) => {
+      if (e.target.id === 'claimModal') closeModal();
+    });
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', checkUser);
+  </script>
+</body>
+</html>
