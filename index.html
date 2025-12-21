@@ -475,8 +475,9 @@ tr:hover {
   // Supabase configuration
 const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMwNDkwNzIsImV4cCI6MjA0ODYyNTA3Mn0.gU3mIBV1iCR4NcdJ9WHhIILjAGFcD2Z-D4A4yBBKDwM';
-const { createClient } = supabase;
-async function login() {
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  
+  async function login() {
       // Login function
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
