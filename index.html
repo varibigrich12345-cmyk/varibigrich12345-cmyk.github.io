@@ -274,91 +274,98 @@
   function searchByCar() { alert('Поиск пока не реализован'); }
 
   async function saveClaim(event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    const { data, error: userError } = await supabaseClient.auth.getUser();
-    const user = data?.user;
+  // ✅ ПРАВИЛЬНО получаем пользователя
+  const { data, error: userError } = await supabaseClient.auth.getUser();
+  const user = data?.user;
 
-    if (userError || !user) {
-      alert('Сначала войдите в систему');
-      return;
-    }
-
-    const complaint = [];
-    document.querySelectorAll('#complaintBody tr').forEach(tr => {
-      const inputs = tr.querySelectorAll('input, select');
-      const name = inputs[0].value;
-      if (!name) return;
-      complaint.push({
-        name: name,
-        side: inputs[1].value,
-        position: inputs[2].value,
-        quantity: parseInt(inputs[3].value) || 1
-      });
-    });
-
-    const works = [];
-    document.querySelectorAll('#worksBody tr').forEach(tr => {
-      const inputs = tr.querySelectorAll('input, select');
-      const name = inputs[0].value;
-      if (!name) return;
-      works.push({
-        name: name,
-        side: inputs[1].value,
-        position: inputs[2].value,
-        quantity: parseInt(inputs[3].value) || 1,
-        price: parseFloat(inputs[4].value) || 0
-      });
-    });
-
-    const parts = [];
-    document.querySelectorAll('#partsBody tr').forEach(tr => {
-      const inputs = tr.querySelectorAll('input, select');
-      const article = inputs[0].value;
-      const name = inputs[1].value;
-      if (!article && !name) return;
-      parts.push({
-        article: article,
-        name: name,
-        side: inputs[2].value,
-        position: inputs[3].value,
-        quantity: parseInt(inputs[4].value) || 1,
-        price: parseFloat(inputs[5].value) || 0
-      });
-    });
-
-    const claimData = {
-      car_number: document.getElementById('carNumber').value,
-      car_brand: document.getElementById('carBrand').value,
-      vin: document.getElementById('vin').value,
-      mileage: parseInt(document.getElementById('mileage').value) || null,
-      client_fio: document.getElementById('clientFio').value,
-      client_company: document.getElementById('clientCompany').value,
-      phone: document.getElementById('phone').value,
-      complaint: complaint,
-      status: document.getElementById('status').value,
-      works: works,
-      parts: parts,
-      user_id: user.id,
-      number: document.getElementById('claimNumber').value
-    };
-
-    const claimId = document.getElementById('claimId').value;
-    let result;
-    if (claimId) {
-      result = await supabaseClient.from('claims').update(claimData).eq('id', claimId);
-    } else {
-      result = await supabaseClient.from('claims').insert([claimData]);
-    }
-
-    if (result.error) {
-      alert('Ошибка: ' + result.error.message);
-    } else {
-      alert('Заявка сохранена!');
-      closeModal();
-      loadClaims();
-    }
+  if (userError || !user) {
+    alert('Сначала войдите в систему');
+    return;
   }
+
+  const complaint = [];
+  document.querySelectorAll('#complaintBody tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input, select');
+    const name = inputs[0].value;
+    if (!name) return;
+    complaint.push({
+      name: name,
+      side: inputs[1].value,
+      position: inputs[2].value,
+      quantity: parseInt(inputs[3].value) || 1
+    });
+  });
+
+  const works = [];
+  document.querySelectorAll('#worksBody tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input, select');
+    const name = inputs[0].value;
+    if (!name) return;
+    works.push({
+      name: name,
+      side: inputs[1].value,
+      position: inputs[2].value,
+      quantity: parseInt(inputs[3].value) || 1,
+      price: parseFloat(inputs[4].value) || 0
+    });
+  });
+
+  const parts = [];
+  document.querySelectorAll('#partsBody tr').forEach(tr => {
+    const inputs = tr.querySelectorAll('input, select');
+    const article = inputs[0].value;
+    const name = inputs[1].value;
+    if (!article && !name) return;
+    parts.push({
+      article: article,
+      name: name,
+      side: inputs[2].value,
+      position: inputs[3].value,
+      quantity: parseInt(inputs[4].value) || 1,
+      price: parseFloat(inputs[5].value) || 0
+    });
+  });
+
+  const claimData = {
+    car_number: document.getElementById('carNumber').value,
+    car_brand: document.getElementById('carBrand').value,
+    vin: document.getElementById('vin').value,
+    mileage: parseInt(document.getElementById('mileage').value) || null,
+    client_fio: document.getElementById('clientFio').value,
+    client_company: document.getElementById('clientCompany').value,
+    phone: document.getElementById('phone').value,
+    complaint,
+    works,
+    parts,
+    status: document.getElementById('status').value,
+    user_id: user.id,
+    number: document.getElementById('claimNumber').value
+  };
+
+  const claimId = document.getElementById('claimId').value;
+
+  let result;
+  if (claimId) {
+    result = await supabaseClient
+      .from('claims')
+      .update(claimData)
+      .eq('id', claimId);
+  } else {
+    result = await supabaseClient
+      .from('claims')
+      .insert([claimData]);
+  }
+
+  if (result.error) {
+    alert('Ошибка: ' + result.error.message);
+  } else {
+    alert('Заявка сохранена!');
+    closeModal();
+    loadClaims();
+  }
+}
 
   function showClaimForm() {
     document.getElementById('claimId').value = '';
