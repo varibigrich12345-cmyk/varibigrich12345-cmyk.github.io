@@ -1,4 +1,639 @@
-<script>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 10px;
+    }
+
+    .hide {
+      display: none !important;
+    }
+
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 20px;
+    }
+
+    .user-info {
+      font-size: 14px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #3498db;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2980b9;
+    }
+
+    .btn-success {
+      background: #27ae60;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #229954;
+    }
+
+    .btn-danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+
+    .btn-secondary {
+      background: #95a5a6;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #7f8c8d;
+    }
+
+    .btn-warning {
+      background: #f39c12;
+      color: white;
+    }
+
+    .btn-warning:hover {
+      background: #e67e22;
+    }
+
+    .search-screen {
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .search-screen h2 {
+      margin-bottom: 30px;
+      color: #2c3e50;
+    }
+
+    .search-box {
+      max-width: 500px;
+      margin: 0 auto 40px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .search-box input {
+      flex: 1;
+      padding: 15px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .search-results {
+      background: #ecf0f1;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 800px;
+      border-radius: 8px;
+      text-align: left;
+    }
+
+    .result-item {
+      margin: 10px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 4px;
+      border-left: 4px solid #3498db;
+    }
+
+    .result-item h4 {
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+
+    .result-item p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .toolbar {
+      padding: 15px 20px;
+      background: #ecf0f1;
+      border-bottom: 1px solid #bdc3c7;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ecf0f1;
+    }
+
+    th {
+      background: #34495e;
+      color: white;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background: #f8f9fa;
+    }
+
+    .status {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-draft {
+      background: #ecf0f1;
+      color: #7f8c8d;
+    }
+
+    .status-agreed {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .status-in_progress {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-completed {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .form-container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .form-group {
+      margin: 15px 0;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .modal.show {
+      display: flex;
+      align-items: start;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #ecf0f1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 20px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .close {
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #7f8c8d;
+    }
+
+    .close:hover {
+      color: #2c3e50;
+    }
+
+    /* Стили для таблиц */
+    .table-form {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+
+    .table-form th,
+    .table-form td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      font-size: 13px;
+    }
+
+    .table-form input,
+    .table-form select {
+      width: 100%;
+      padding: 4px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+
+    .table-form input[type="number"] {
+      text-align: right;
+    }
+
+    /* Выравнивание полей */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .form-row.full {
+      grid-template-columns: 1fr;
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      .print-hide {
+        display: none !important;
+      }
+      body {
+        background: white;
+        padding: 0;
+      }
+      .app {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: none;
+      }
+    }
+
+    /* Анимация загрузки */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</h1>
+      <div class="user-info" id="userInfo"></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="search-screen">
+      <h2>Вход в систему</h2>
+      <div class="form-container">
+        <div class="form-group">
+          <input type="email" id="loginEmail" placeholder="Email">
+        </div>
+        <div class="form-group">
+          <input type="password" id="loginPassword" placeholder="Пароль">
+        </div>
+        <button id="loginBtn" class="btn btn-primary">Войти</button>
+      </div>
+    </div>
+
+    <!-- Search Screen -->
+    <div id="searchScreen" class="search-screen hide">
+      <h2>Поиск по госномеру</h2>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Введите госномер (например: А123АА77)">
+        <button id="searchBtn" class="btn btn-primary">Поиск</button>
+      </div>
+      <div id="searchResults"></div>
+      <button id="backToMainBtn" class="btn btn-secondary">К списку заявок</button>
+    </div>
+
+    <!-- Main Screen -->
+    <div id="mainScreen" class="hide">
+      <div class="toolbar">
+        <div class="toolbar-title">Заявки на ремонт</div>
+        <div>
+          <button id="createClaimBtn" class="btn btn-success">+ Создать заявку</button>
+          <button id="searchByCarBtn" class="btn btn-secondary">Поиск по госномеру</button>
+          <button id="logoutBtn" class="btn btn-danger">Выход</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Номер</th>
+                <th>Дата</th>
+                <th>Госномер</th>
+                <th>Авто</th>
+                <th>Клиент</th>
+                <th>Телефон</th>
+                <th>Статус</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="claimsBody">
+              <tr><td colspan="8" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Claim Modal -->
+  <div id="claimModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Новая заявка</h2>
+        <span class="close" id="closeModalBtn">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="claimForm">
+          <input type="hidden" id="claimId">
+          <input type="hidden" id="claimNumber" name="number">
+
+          <!-- Госномер и Телефон — на одном уровне -->
+          <div class="form-row">
+            <div>
+              <label>Госномер *</label>
+              <input type="text" id="carNumber" required>
+            </div>
+            <div>
+              <label>Телефон *</label>
+              <input type="tel" id="phone" required>
+            </div>
+          </div>
+
+          <!-- Марка/Модель -->
+          <div class="form-row full">
+            <div>
+              <label>Марка/Модель</label>
+              <input type="text" list="carBrandList" id="carBrand">
+            </div>
+          </div>
+
+          <!-- VIN и Пробег -->
+          <div class="form-row">
+            <div>
+              <label>VIN</label>
+              <input type="text" id="vin">
+            </div>
+            <div>
+              <label>Пробег (км)</label>
+              <input type="number" id="mileage">
+            </div>
+          </div>
+
+          <!-- ФИО и Компания -->
+          <div class="form-row">
+            <div>
+              <label>ФИО клиента *</label>
+              <input type="text" id="clientFio" required>
+            </div>
+            <div>
+              <label>Компания</label>
+              <input type="text" id="clientCompany">
+            </div>
+          </div>
+
+          <!-- Описание проблемы -->
+          <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Описание проблемы (заполняется мастером)</h3>
+          <div class="table-container" style="margin-bottom:15px;">
+            <table id="complaintTable" class="table-form">
+              <thead>
+                <tr>
+                  <th>Наименование</th>
+                  <th>Сторона</th>
+                  <th>Положение</th>
+                  <th>Кол-во</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="complaintBody"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addComplaintBtn">+ Добавить строку</button>
+
+          <!-- Список работ -->
+          <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Список работ</h3>
+          <div class="table-container" style="margin-bottom:15px;">
+            <table id="worksTable" class="table-form">
+              <thead>
+                <tr>
+                  <th>Наименование</th>
+                  <th>Сторона</th>
+                  <th>Положение</th>
+                  <th>Кол-во</th>
+                  <th class="print-hide">Цена</th>
+                  <th class="print-hide">Сумма</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="worksBody"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addWorkBtn">+ Добавить работу вручную</button>
+
+          <!-- Запчасти -->
+          <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Запчасти</h3>
+          <div class="table-container" style="margin-bottom:15px;">
+            <table id="partsTable" class="table-form">
+              <thead>
+                <tr>
+                  <th>Артикул</th>
+                  <th>Наименование</th>
+                  <th>Сторона</th>
+                  <th>Положение</th>
+                  <th>Кол-во</th>
+                  <th class="print-hide">Цена</th>
+                  <th class="print-hide">Сумма</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="partsBody"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addPartBtn">+ Добавить запчасть</button>
+
+          <!-- Итоги -->
+          <div style="display:flex;justify-content:space-between;margin:20px 0;font-weight:bold;">
+            <span>Итого работ: <span id="totalWorks">0 ₽</span></span>
+            <span>Итого запчастей: <span id="totalParts">0 ₽</span></span>
+            <span>Общая сумма: <span id="totalSum">0 ₽</span></span>
+          </div>
+
+          <!-- Статус -->
+          <div class="form-row full">
+            <div>
+              <label>Статус</label>
+              <select id="status">
+                <option value="draft">Черновик</option>
+                <option value="agreed">Согласовано</option>
+                <option value="in_progress">В работе</option>
+                <option value="completed">Завершена</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Кнопки -->
+          <div style="margin-top:20px">
+            <button type="submit" class="btn btn-success">Сохранить</button>
+            <button type="button" class="btn btn-secondary" id="cancelModalBtn">Отмена</button>
+            <button type="button" class="btn btn-warning" id="exportBtn" style="display:none">Экспорт CSV</button>
+            <button type="button" class="btn btn-primary" id="printBtn">Печать</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Списки автозаполнения -->
+  <datalist id="carBrandList">
+    <option value="ГАЗель">
+    <option value="Ford Transit">
+    <option value="Hyundai HD78">
+    <option value="Peugeot Boxer">
+    <option value="MAN">
+    <option value="Mercedes-Benz Sprinter">
+    <option value="Volkswagen Transporter">
+    <option value="Renault Master">
+    <option value="IVECO Daily">
+    <option value="KAMAZ">
+  </datalist>
+
+  <datalist id="workList">
+    <option value="Замена шаровой опоры">
+    <option value="Замена тормозных колодок">
+    <option value="Замена масла в двигателе">
+    <option value="Замена свечей зажигания">
+    <option value="Замена ремня ГРМ">
+    <option value="Замена амортизатора">
+    <option value="Замена рулевой рейки">
+    <option value="Замена подшипника ступицы">
+    <option value="Замена тормозного шланга">
+    <option value="Замена радиатора">
+  </datalist>
+
+  <datalist id="partList">
+    <option value="Опора шаровая">
+    <option value="Колодки тормозные">
+    <option value="Масло моторное">
+    <option value="Свечи зажигания">
+    <option value="Ремень ГРМ">
+    <option value="Амортизатор">
+    <option value="Рейка рулевая">
+    <option value="Подшипник ступицы">
+    <option value="Шланг тормозной">
+    <option value="Радиатор">
+  </datalist>
+
+  <<script>
   // Supabase configuration — АКТУАЛЬНЫЙ КЛЮЧ
   const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
@@ -274,98 +909,89 @@
   function searchByCar() { alert('Поиск пока не реализован'); }
 
   async function saveClaim(event) {
-  event.preventDefault();
+    event.preventDefault();
 
-  // ✅ ПРАВИЛЬНО получаем пользователя
-  const { data, error: userError } = await supabaseClient.auth.getUser();
-  const user = data?.user;
+    const {  { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      alert('Сначала войдите в систему');
+      return;
+    }
 
-  if (userError || !user) {
-    alert('Сначала войдите в систему');
-    return;
-  }
-
-  const complaint = [];
-  document.querySelectorAll('#complaintBody tr').forEach(tr => {
-    const inputs = tr.querySelectorAll('input, select');
-    const name = inputs[0].value;
-    if (!name) return;
-    complaint.push({
-      name: name,
-      side: inputs[1].value,
-      position: inputs[2].value,
-      quantity: parseInt(inputs[3].value) || 1
+    const complaint = [];
+    document.querySelectorAll('#complaintBody tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input, select');
+      const name = inputs[0].value;
+      if (!name) return;
+      complaint.push({
+        name: name,
+        side: inputs[1].value,
+        position: inputs[2].value,
+        quantity: parseInt(inputs[3].value) || 1
+      });
     });
-  });
 
-  const works = [];
-  document.querySelectorAll('#worksBody tr').forEach(tr => {
-    const inputs = tr.querySelectorAll('input, select');
-    const name = inputs[0].value;
-    if (!name) return;
-    works.push({
-      name: name,
-      side: inputs[1].value,
-      position: inputs[2].value,
-      quantity: parseInt(inputs[3].value) || 1,
-      price: parseFloat(inputs[4].value) || 0
+    const works = [];
+    document.querySelectorAll('#worksBody tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input, select');
+      const name = inputs[0].value;
+      if (!name) return;
+      works.push({
+        name: name,
+        side: inputs[1].value,
+        position: inputs[2].value,
+        quantity: parseInt(inputs[3].value) || 1,
+        price: parseFloat(inputs[4].value) || 0
+      });
     });
-  });
 
-  const parts = [];
-  document.querySelectorAll('#partsBody tr').forEach(tr => {
-    const inputs = tr.querySelectorAll('input, select');
-    const article = inputs[0].value;
-    const name = inputs[1].value;
-    if (!article && !name) return;
-    parts.push({
-      article: article,
-      name: name,
-      side: inputs[2].value,
-      position: inputs[3].value,
-      quantity: parseInt(inputs[4].value) || 1,
-      price: parseFloat(inputs[5].value) || 0
+    const parts = [];
+    document.querySelectorAll('#partsBody tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input, select');
+      const article = inputs[0].value;
+      const name = inputs[1].value;
+      if (!article && !name) return;
+      parts.push({
+        article: article,
+        name: name,
+        side: inputs[2].value,
+        position: inputs[3].value,
+        quantity: parseInt(inputs[4].value) || 1,
+        price: parseFloat(inputs[5].value) || 0
+      });
     });
-  });
 
-  const claimData = {
-    car_number: document.getElementById('carNumber').value,
-    car_brand: document.getElementById('carBrand').value,
-    vin: document.getElementById('vin').value,
-    mileage: parseInt(document.getElementById('mileage').value) || null,
-    client_fio: document.getElementById('clientFio').value,
-    client_company: document.getElementById('clientCompany').value,
-    phone: document.getElementById('phone').value,
-    complaint,
-    works,
-    parts,
-    status: document.getElementById('status').value,
-    user_id: user.id,
-    number: document.getElementById('claimNumber').value
-  };
+    const claimData = {
+      car_number: document.getElementById('carNumber').value,
+      car_brand: document.getElementById('carBrand').value,
+      vin: document.getElementById('vin').value,
+      mileage: parseInt(document.getElementById('mileage').value) || null,
+      client_fio: document.getElementById('clientFio').value,
+      client_company: document.getElementById('clientCompany').value,
+      phone: document.getElementById('phone').value,
+      complaint: complaint,
+      status: document.getElementById('status').value,
+      works: works,
+      parts: parts,
+      user_id: user.id,
+      number: document.getElementById('claimNumber').value
+    };
 
-  const claimId = document.getElementById('claimId').value;
+    const claimId = document.getElementById('claimId').value;
+    let result;
+    if (claimId) {
+      result = await supabaseClient.from('claims').update(claimData).eq('id', claimId);
+    } else {
+      result = await supabaseClient.from('claims').insert([claimData]);
+    }
 
-  let result;
-  if (claimId) {
-    result = await supabaseClient
-      .from('claims')
-      .update(claimData)
-      .eq('id', claimId);
-  } else {
-    result = await supabaseClient
-      .from('claims')
-      .insert([claimData]);
+    if (result.error) {
+      alert('Ошибка: ' + result.error.message);
+    } else {
+      alert('Заявка сохранена!');
+      closeModal();
+      loadClaims();
+    }
   }
-
-  if (result.error) {
-    alert('Ошибка: ' + result.error.message);
-  } else {
-    alert('Заявка сохранена!');
-    closeModal();
-    loadClaims();
-  }
-}
 
   function showClaimForm() {
     document.getElementById('claimId').value = '';
@@ -427,3 +1053,5 @@
     checkUser();
   });
 </script>
+</body>
+</html>
