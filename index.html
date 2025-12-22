@@ -378,6 +378,32 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+        /* CSS для печати */
+    @media print {
+      /* Скрываем всё, кроме модального окна */
+      body * {
+        visibility: hidden;
+      }
+      #claimModal, #claimModal * {
+        visibility: visible;
+      }
+      /* Позиционируем модальное окно в углу страницы для печати */
+      #claimModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+      }
+      /* Скрываем кнопки управления внутри модального окна */
+      .btn, .close, .print-hide {
+        display: none !important;
+      }
+      /* Убираем серый фон и тени */
+      .modal { background: none; }
+      .modal-content { box-shadow: none; border: none; max-height: none; overflow: visible; }
+    }
   </style>
 </head>
 <body>
@@ -1027,11 +1053,36 @@
     document.getElementById('claimModal').classList.remove('show');
   }
 
-  function printClaim() {
-    window.print();
-  }
+  }  function printClaim() {
+    // Получаем данные из формы
+    const number = document.getElementById('claimNumber').value;
+    const car = document.getElementById('carNumber').value;
+    const client = document.getElementById('clientFio').value;
+    const total = document.getElementById('totalSum').textContent;
 
-  // ========== Инициализация ==========
+    // Генерируем простое новое окно для печати
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+      <head><title>Заказ-наряд ${number}</title></head>
+      <body style="font-family: sans-serif; padding: 20px;">
+        <h1 style="text-align:center">ЗАКАЗ-НАРЯД № ${number}</h1>
+        <hr>
+        <p><strong>Автомобиль:</strong> ${car}</p>
+        <p><strong>Клиент:</strong> ${client}</p>
+        <table border="1" style="width:100%; border-collapse: collapse; margin-top: 20px;">
+          <tr><th>Работы/Запчасти</th><th>Сумма</th></tr>
+          <tr><td>Общий итог:</td><td>${total}</td></tr>
+        </table>
+        <div style="margin-top: 50px;">
+          <p>М.П. ___________ (Подпись мастера)</p>
+        </div>
+        <script>window.onload = function() { window.print(); window.close(); }</script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }/ ========== Инициализация ==========
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginBtn').addEventListener('click', login);
     document.getElementById('logoutBtn').addEventListener('click', logout);
