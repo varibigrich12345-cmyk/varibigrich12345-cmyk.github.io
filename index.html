@@ -633,7 +633,7 @@
     <option value="Радиатор">
   </datalist>
 
-  <<script>
+  <script>
   // Supabase configuration — АКТУАЛЬНЫЙ КЛЮЧ
   const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
@@ -911,7 +911,7 @@
   async function saveClaim(event) {
     event.preventDefault();
 
-    const {  { user }, error: userError } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
       alert('Сначала войдите в систему');
       return;
