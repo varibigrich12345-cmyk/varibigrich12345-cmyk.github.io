@@ -276,7 +276,10 @@
   async function saveClaim(event) {
     event.preventDefault();
 
-    const {  { user }, error: userError } = await supabaseClient.auth.getUser();
+    {
+  data: { user },
+  error
+}
     if (userError || !user) {
       alert('Сначала войдите в систему');
       return;
