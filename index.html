@@ -558,26 +558,23 @@
     document.getElementById('exportBtn').style.display = 'none';
     document.getElementById('printBtn').style.display = 'none';
     document.getElementById('claimModal').classList.add('show');
-}
-
-    function saveClaim(event) {
-    event.preventDefault();
-
-    const form = document.getElementById('claimForm');
-    const data = Object.fromEntries(new FormData(form));
-
-    console.log('SAVE CLAIM:', data);
-}
-
-    function exportToCSV() { alert('Экспорт CSV — в разработке'); }
-    function printClaim() { alert('Печать — в разработке'); }
-
     function closeModal() {
       document.getElementById('claimModal').classList.remove('show');
     }
 
     // 👇 Добавляем события через addEventListener — РЕКОМЕНДОВАННЫЙ ПОДХОД
     document.addEventListener('DOMContentLoaded', () => {
+
+    const form = document.getElementById('claimForm');
+    if (!form) {
+    console.error('❌ claimForm не найден');
+    return;
+    }
+
+    form.addEventListener('submit', saveClaim);
+
+    });
+
       // Кнопка входа
       document.getElementById('loginBtn').addEventListener('click', login);
 
