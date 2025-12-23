@@ -560,7 +560,15 @@
     document.getElementById('claimModal').classList.add('show');
 }
 
-    function saveClaim(event) { event.preventDefault(); alert('Сохранение — в разработке'); }
+    function saveClaim(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('claimForm');
+    const data = Object.fromEntries(new FormData(form));
+
+    console.log('SAVE CLAIM:', data);
+}
+
     function exportToCSV() { alert('Экспорт CSV — в разработке'); }
     function printClaim() { alert('Печать — в разработке'); }
 
