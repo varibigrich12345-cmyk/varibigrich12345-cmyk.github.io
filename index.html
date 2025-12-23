@@ -551,7 +551,15 @@
 
     // Заглушки
     function searchByCar() { alert('Поиск пока не реализован'); }
-    function showClaimForm() { alert('Создание заявки — в разработке'); }
+    function showClaimForm() {
+    document.getElementById('claimForm').reset();
+    document.getElementById('claimId').value = '';
+    document.getElementById('modalTitle').textContent = 'Новая заявка';
+    document.getElementById('exportBtn').style.display = 'none';
+    document.getElementById('printBtn').style.display = 'none';
+    document.getElementById('claimModal').classList.add('show');
+}
+
     function saveClaim(event) { event.preventDefault(); alert('Сохранение — в разработке'); }
     function exportToCSV() { alert('Экспорт CSV — в разработке'); }
     function printClaim() { alert('Печать — в разработке'); }
