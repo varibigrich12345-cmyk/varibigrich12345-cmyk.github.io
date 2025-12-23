@@ -52,15 +52,19 @@
     .table-form th, .table-form td { padding: 8px; border: 1px solid #ddd; font-size: 13px; }
     .table-form input, .table-form select { width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 13px; }
     .table-form input[type="number"] { text-align: right; }
+    .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #fff; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; }
+    .error-message { background: #fee; color: #c00; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    .success-message { background: #dfd; color: #070; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     @media print {
       body { background: white !important; padding: 0; }
       .app { box-shadow: none; border-radius: 0; max-width: none; }
-      .no-print, .print-hide { display: none !important; }
-      .header, .toolbar, .btn { display: none !important; }
+      .no-print, .print-hide, .btn { display: none !important; }
       .modal { display: block !important; position: static; background: white; }
-      .modal-content { max-height: none; overflow: visible; }
+      .modal-content { max-height: none; overflow: visible; border: 1px solid #000; }
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .search-filters { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .search-filters input, .search-filters select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
   </style>
 </head>
 <body>
@@ -74,6 +78,7 @@
     <div id="loginScreen" class="search-screen">
       <h2>Вход в систему</h2>
       <div class="form-container">
+        <div id="loginError" class="error-message hide"></div>
         <div class="form-group"><input type="email" id="loginEmail" placeholder="Email"></div>
         <div class="form-group"><input type="password" id="loginPassword" placeholder="Пароль"></div>
         <button id="loginBtn" class="btn btn-primary">Войти</button>
@@ -90,6 +95,21 @@
         </div>
       </div>
       <div class="content">
+        <!-- Поиск и фильтры -->
+        <div class="search-filters">
+          <input type="text" id="searchInput" placeholder="Поиск по номеру, госномеру или клиенту..." style="flex: 2;">
+          <input type="text" id="searchCarNumber" placeholder="Госномер">
+          <select id="filterStatus">
+            <option value="">Все статусы</option>
+            <option value="draft">Черновик</option>
+            <option value="agreed">Согласовано</option>
+            <option value="in_progress">В работе</option>
+            <option value="completed">Завершена</option>
+          </select>
+          <button id="searchBtn" class="btn btn-primary">Поиск</button>
+          <button id="clearSearchBtn" class="btn btn-secondary">Сбросить</button>
+        </div>
+
         <div class="table-container">
           <table>
             <thead>
@@ -101,10 +121,11 @@
                 <th>Клиент</th>
                 <th>Телефон</th>
                 <th>Статус</th>
+                <th>Сумма</th>
                 <th>Действия</th>
               </tr>
             </thead>
-            <tbody id="claimsBody"><tr><td colspan="8" style="text-align:center;padding:20px;color:#7f8c8d;">Нет заявок</td></tr></tbody>
+            <tbody id="claimsBody"><tr><td colspan="9" style="text-align:center;padding:20px;color:#7f8c8d;">Нет заявок</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -125,48 +146,65 @@
 
           <!-- Госномер и телефон — на одном уровне -->
           <div class="form-row">
-            <div><label>Госномер *</label><input type="text" id="carNumber" required></div>
-            <div><label>Телефон *</label><input type="tel" id="phone" required></div>
+            <div class="form-group">
+              <label>Госномер *</label>
+              <input type="text" id="carNumber" required pattern="[А-Я]\d{3}[А-Я]{2}\d{2,3}" title="Формат: А123БВ45">
+              <small style="color:#666">Формат: А123БВ45 или А123БВ123</small>
+            </div>
+            <div class="form-group">
+              <label>Телефон *</label>
+              <input type="tel" id="phone" required pattern="[\d\s\-\+\(\)]{10,}" title="Минимум 10 цифр">
+            </div>
           </div>
 
           <!-- Марка/Модель -->
           <div class="form-row full">
-            <div><label>Марка/Модель</label><input type="text" list="carBrandList" id="carBrand"></div>
+            <div class="form-group">
+              <label>Марка/Модель</label>
+              <input type="text" list="carBrandList" id="carBrand">
+            </div>
           </div>
 
           <!-- VIN и пробег -->
           <div class="form-row">
-            <div><label>VIN</label><input type="text" id="vin"></div>
-            <div><label>Пробег (км)</label><input type="number" id="mileage"></div>
+            <div class="form-group"><label>VIN</label><input type="text" id="vin"></div>
+            <div class="form-group"><label>Пробег (км)</label><input type="number" id="mileage" min="0"></div>
           </div>
 
           <!-- Клиент -->
           <div class="form-row">
-            <div><label>ФИО клиента *</label><input type="text" id="clientFio" required></div>
-            <div><label>Компания</label><input type="text" id="clientCompany"></div>
+            <div class="form-group"><label>ФИО клиента *</label><input type="text" id="clientFio" required></div>
+            <div class="form-group"><label>Компания</label><input type="text" id="clientCompany"></div>
           </div>
 
           <!-- Описание проблемы -->
           <h3 style="margin:25px 0 15px; color:#2c3e50;">Описание проблемы</h3>
-          <div class="table-container"><table class="table-form" id="complaintTable">
-            <thead><tr><th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th></th></tr></thead>
-            <tbody id="complaintBody"></tbody>
-          </table></div>
+          <div class="table-container">
+            <table class="table-form" id="complaintTable">
+              <thead><tr><th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th></th></tr></thead>
+              <tbody id="complaintBody"></tbody>
+            </table>
+          </div>
           <button type="button" class="btn btn-secondary" id="addComplaintBtn">+ Добавить</button>
 
           <!-- Работы -->
           <h3 style="margin:25px 0 15px; color:#2c3e50;">Список работ</h3>
-          <div class="table-container"><table class="table-form" id="worksTable">
-            <thead><tr><th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th class="print-hide">Цена</th><th class="print-hide">Сумма</th><th></th></tr></thead>
-            <tbody id="worksBody"></tbody>
-          </table></div>
+          <div class="table-container">
+            <table class="table-form" id="worksTable">
+              <thead><tr><th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th class="print-hide">Цена</th><th class="print-hide">Сумма</th><th></th></tr></thead>
+              <tbody id="worksBody"></tbody>
+            </table>
+          </div>
+          <button type="button" class="btn btn-secondary" id="addWorkBtn">+ Добавить работу</button>
 
           <!-- Запчасти -->
           <h3 style="margin:25px 0 15px; color:#2c3e50;">Запчасти</h3>
-          <div class="table-container"><table class="table-form" id="partsTable">
-            <thead><tr><th>Артикул</th><th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th class="print-hide">Цена</th><th class="print-hide">Сумма</th><th></th></tr></thead>
-            <tbody id="partsBody"></tbody>
-          </table></div>
+          <div class="table-container">
+            <table class="table-form" id="partsTable">
+              <thead><tr><th>Артикул</th><th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th class="print-hide">Цена</th><th class="print-hide">Сумма</th><th></th></tr></thead>
+              <tbody id="partsBody"></tbody>
+            </table>
+          </div>
           <button type="button" class="btn btn-secondary" id="addPartBtn">+ Добавить запчасть</button>
 
           <!-- Итоги -->
@@ -178,20 +216,23 @@
 
           <!-- Статус -->
           <div class="form-row full">
-            <div><label>Статус</label>
-            <select id="status">
-              <option value="draft">Черновик</option>
-              <option value="agreed">Согласовано</option>
-              <option value="in_progress">В работе</option>
-              <option value="completed">Завершена</option>
-            </select></div>
+            <div class="form-group">
+              <label>Статус</label>
+              <select id="status">
+                <option value="draft">Черновик</option>
+                <option value="agreed">Согласовано</option>
+                <option value="in_progress">В работе</option>
+                <option value="completed">Завершена</option>
+              </select>
+            </div>
           </div>
 
           <!-- Кнопки -->
           <div style="margin-top:20px">
             <button type="submit" class="btn btn-success">Сохранить</button>
             <button type="button" class="btn btn-secondary" id="cancelModalBtn">Отмена</button>
-            <button type="button" class="btn btn-primary" id="printBtn">Печать</button>
+            <button type="button" class="btn btn-primary no-print" id="printBtn">Печать</button>
+            <button type="button" class="btn btn-danger no-print" id="deleteClaimBtn" style="display:none">Удалить заявку</button>
           </div>
         </form>
       </div>
@@ -206,28 +247,47 @@
   </datalist>
   <datalist id="workList">
     <option value="Замена шаровой опоры"><option value="Замена тормозных колодок"><option value="Замена масла">
+    <option value="Замена фильтров"><option value="Регулировка развала-схождения"><option value="Диагностика">
+    <option value="Замена АКБ"><option value="Замена шин"><option value="Ремонт двигателя">
   </datalist>
   <datalist id="partList">
     <option value="Опора шаровая"><option value="Колодки тормозные"><option value="Масло моторное">
+    <option value="Фильтр воздушный"><option value="Фильтр масляный"><option value="Аккумулятор">
+    <option value="Шина"><option value="Диск"><option value="Свечи зажигания">
   </datalist>
 
   <script>
-    // Supabase
+    // Supabase конфигурация
     const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
+    
+    // ВАЖНО: В реальном приложении используйте серверную часть для аутентификации
+    // Этот ключ должен быть защищен и не находиться в клиентском коде
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Вспомогательные функции
-    const sides = ['–', 'Левая', 'Правая', 'Передняя', 'Задняя'];
-    const positions = ['–', 'Верхний', 'Нижний', 'Передний', 'Задний', 'Центр'];
+    // Константы и статусы
+    const STATUS_LABELS = {
+      draft: 'Черновик',
+      agreed: 'Согласовано',
+      in_progress: 'В работе',
+      completed: 'Завершена'
+    };
 
+    const SIDES = ['–', 'Левая', 'Правая', 'Передняя', 'Задняя'];
+    const POSITIONS = ['–', 'Верхний', 'Нижний', 'Передний', 'Задний', 'Центр'];
+
+    // Глобальное состояние
+    let currentClaims = [];
+    let currentUser = null;
+
+    // Вспомогательные функции
     function createSelect(options, value = '') {
       const select = document.createElement('select');
       options.forEach(opt => {
         const el = document.createElement('option');
         el.value = opt === '–' ? '' : opt;
         el.textContent = opt;
-        el.selected = el.value === value;
+        if (el.value === value) el.selected = true;
         select.appendChild(el);
       });
       return select;
@@ -238,9 +298,25 @@
       return `CLAIM-${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*1000)).padStart(3,'0')}`;
     }
 
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' ₽';
+    }
+
+    function showMessage(elementId, message, isError = false) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.className = isError ? 'error-message' : 'success-message';
+      element.classList.remove('hide');
+      
+      if (!isError) {
+        setTimeout(() => element.classList.add('hide'), 3000);
+      }
+    }
+
     function addRow(containerId, data = null, isComplaint = false) {
       const tbody = document.getElementById(containerId);
       const isPart = containerId === 'partsBody';
+      const isWork = containerId === 'worksBody';
       const tr = document.createElement('tr');
       
       if (isPart) {
@@ -249,59 +325,106 @@
           <td><input type="text" list="partList" placeholder="Наименование" value="${data?.name || ''}"></td>
           <td></td><td></td>
           <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
-          <td class="print-hide"><input type="number" min="0" value="${data?.price || 0}" style="width:80px;"></td>
-          <td class="print-hide" style="text-align:right;">${(data ? (data.quantity * data.price).toFixed(2) : '0.00')} ₽</td>
-          <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
+          <td class="print-hide"><input type="number" min="0" step="0.01" value="${data?.price || 0}" style="width:80px;"></td>
+          <td class="print-hide" style="text-align:right;">${formatCurrency((data?.quantity || 0) * (data?.price || 0))}</td>
+          <td class="no-print"><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
         `;
-      } else {
+      } else if (isWork) {
         tr.innerHTML = `
           <td><input type="text" list="workList" placeholder="Наименование" value="${data?.name || ''}"></td>
           <td></td><td></td>
           <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
-          ${isComplaint ? '' : `<td class="print-hide"><input type="number" min="0" value="${data?.price || 0}" style="width:80px;"></td>
-          <td class="print-hide" style="text-align:right;">${(data ? (data.quantity * data.price).toFixed(2) : '0.00')} ₽</td>`}
-          <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
+          <td class="print-hide"><input type="number" min="0" step="0.01" value="${data?.price || 0}" style="width:80px;"></td>
+          <td class="print-hide" style="text-align:right;">${formatCurrency((data?.quantity || 0) * (data?.price || 0))}</td>
+          <td class="no-print"><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
+        `;
+      } else {
+        // Complaint
+        tr.innerHTML = `
+          <td><input type="text" placeholder="Описание проблемы" value="${data?.name || ''}"></td>
+          <td></td><td></td>
+          <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
+          <td class="no-print"><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
         `;
       }
       
-      tr.querySelectorAll('td')[isPart ? 2 : 1].appendChild(createSelect(sides, data?.side));
-      tr.querySelectorAll('td')[isPart ? 3 : 2].appendChild(createSelect(positions, data?.position));
+      // Добавляем селекты для сторон и положений
+      const sideCell = isPart ? 2 : isWork ? 1 : 1;
+      const positionCell = isPart ? 3 : isWork ? 2 : 2;
       
-      const btn = tr.querySelector('button');
-      btn.onclick = () => {
-        tr.remove();
-        if (containerId === 'complaintBody') syncComplaintToWorks();
-        calculateTotals();
+      tr.querySelectorAll('td')[sideCell].appendChild(createSelect(SIDES, data?.side));
+      tr.querySelectorAll('td')[positionCell].appendChild(createSelect(POSITIONS, data?.position));
+      
+      // Обработчик удаления строки
+      const deleteBtn = tr.querySelector('button');
+      deleteBtn.onclick = () => {
+        if (confirm('Удалить эту запись?')) {
+          tr.remove();
+          if (isComplaint) syncComplaintToWorks();
+          calculateTotals();
+        }
       };
       
-      tbody.appendChild(tr);
-      if (!isComplaint) attachNumberEvents(tr);
-      if (containerId === 'complaintBody') {
-        tr.querySelector('input').addEventListener('input', () => syncComplaintToWorks());
+      // Обработчики для вычислений
+      if (!isComplaint) {
+        const inputs = tr.querySelectorAll('input[type="number"]');
+        inputs.forEach(input => {
+          input.addEventListener('input', calculateTotals);
+        });
       }
-    }
-
-    function attachNumberEvents(row) {
-      row.querySelectorAll('input[type="number"]').forEach(input => {
-        input.addEventListener('input', calculateTotals);
-      });
+      
+      // Для жалоб - синхронизация с работами
+      if (isComplaint) {
+        tr.querySelector('input[type="text"]').addEventListener('input', () => syncComplaintToWorks());
+        tr.querySelectorAll('select').forEach(select => {
+          select.addEventListener('change', () => syncComplaintToWorks());
+        });
+      }
+      
+      tbody.appendChild(tr);
+      return tr;
     }
 
     function syncComplaintToWorks() {
-      const worksBody = document.getElementById('worksBody');
-      worksBody.innerHTML = '';
+      const complaints = [];
       document.querySelectorAll('#complaintBody tr').forEach(tr => {
         const inputs = tr.querySelectorAll('input, select');
         const name = inputs[0].value;
         if (!name) return;
-        addRow('worksBody', {
+        
+        complaints.push({
           name: name,
           side: inputs[1].value,
           position: inputs[2].value,
-          quantity: parseInt(inputs[3].value) || 1,
-          price: 0
+          quantity: parseInt(inputs[3].value) || 1
         });
       });
+      
+      // Сохраняем существующие цены работ
+      const priceMap = {};
+      document.querySelectorAll('#worksBody tr').forEach(tr => {
+        const nameInput = tr.querySelector('td:first-child input');
+        const priceInput = tr.querySelector('td:nth-child(5) input');
+        if (nameInput && nameInput.value && priceInput) {
+          priceMap[nameInput.value] = parseFloat(priceInput.value) || 0;
+        }
+      });
+      
+      // Обновляем таблицу работ
+      const worksBody = document.getElementById('worksBody');
+      worksBody.innerHTML = '';
+      
+      complaints.forEach(complaint => {
+        addRow('worksBody', {
+          name: complaint.name,
+          side: complaint.side,
+          position: complaint.position,
+          quantity: complaint.quantity,
+          price: priceMap[complaint.name] || 0
+        });
+      });
+      
+      calculateTotals();
     }
 
     function calculateTotals() {
@@ -309,9 +432,9 @@
       document.querySelectorAll('#worksBody tr').forEach(tr => {
         const cells = tr.querySelectorAll('td');
         const qty = parseFloat(cells[3].querySelector('input').value) || 0;
-        const price = parseFloat((cells[4] || {querySelector: () => ({value:0})}).querySelector('input')?.value) || 0;
+        const price = parseFloat(cells[4].querySelector('input').value) || 0;
         const sum = qty * price;
-        if (cells[5]) cells[5].textContent = `${sum.toFixed(2)} ₽`;
+        if (cells[5]) cells[5].textContent = formatCurrency(sum);
         totalWorks += sum;
       });
 
@@ -321,39 +444,54 @@
         const qty = parseFloat(cells[4].querySelector('input').value) || 0;
         const price = parseFloat(cells[5].querySelector('input').value) || 0;
         const sum = qty * price;
-        cells[6].textContent = `${sum.toFixed(2)} ₽`;
+        cells[6].textContent = formatCurrency(sum);
         totalParts += sum;
       });
 
-      document.getElementById('totalWorks').textContent = `${totalWorks.toFixed(2)} ₽`;
-      document.getElementById('totalParts').textContent = `${totalParts.toFixed(2)} ₽`;
-      document.getElementById('totalSum').textContent = `${(totalWorks + totalParts).toFixed(2)} ₽`;
+      document.getElementById('totalWorks').textContent = formatCurrency(totalWorks);
+      document.getElementById('totalParts').textContent = formatCurrency(totalParts);
+      document.getElementById('totalSum').textContent = formatCurrency(totalWorks + totalParts);
     }
 
     // Основные функции
     async function login() {
-      const email = document.getElementById('loginEmail').value;
+      const email = document.getElementById('loginEmail').value.trim();
       const password = document.getElementById('loginPassword').value;
       const btn = document.getElementById('loginBtn');
-      if (!email || !password) return alert('Введите email и пароль');
+      const errorElement = document.getElementById('loginError');
+      
+      if (!email || !password) {
+        showMessage('loginError', 'Введите email и пароль', true);
+        return;
+      }
       
       btn.disabled = true;
-      btn.innerHTML = '<span style="display:inline-block;width:20px;height:20px;border:3px solid #fff;border-radius:50%;border-top-color:transparent;animation:spin 1s linear infinite"></span>';
+      btn.innerHTML = '<span class="spinner"></span> Вход...';
       
       try {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        
         if (error) throw error;
+        
+        currentUser = data.user;
         checkUser();
+        showMessage('loginError', 'Вход выполнен успешно!', false);
+        
       } catch (err) {
-        alert('Ошибка: ' + err.message);
+        showMessage('loginError', 'Ошибка входа: ' + err.message, true);
+      } finally {
         btn.disabled = false;
         btn.textContent = 'Войти';
       }
     }
 
     async function logout() {
-      await supabase.auth.signOut();
-      checkUser();
+      if (confirm('Вы уверены, что хотите выйти?')) {
+        await supabase.auth.signOut();
+        currentUser = null;
+        currentClaims = [];
+        checkUser();
+      }
     }
 
     async function checkUser() {
@@ -368,113 +506,320 @@
         ui.login.classList.remove('hide');
         ui.main.classList.add('hide');
         ui.user.textContent = '';
+        currentUser = null;
       } else {
         ui.login.classList.add('hide');
         ui.main.classList.remove('hide');
-        ui.user.textContent = data.user.email;
+        ui.user.textContent = `${data.user.email}`;
+        currentUser = data.user;
         loadClaims();
       }
     }
 
-    async function loadClaims() {
-      const { data, error } = await supabase
-        .from('claims')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+    async function loadClaims(filters = {}) {
       const body = document.getElementById('claimsBody');
-      if (error) return body.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#e74c3c;padding:20px;">Ошибка: ${error.message}</td></tr>`;
-      if (!data?.length) return body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
+      body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#7f8c8d;">Загрузка...</td></tr>';
       
-      body.innerHTML = data.map(c => `
-        <tr>
-          <td>${c.number}</td>
-          <td>${new Date(c.created_at).toLocaleString()}</td>
-          <td>${c.car_number}</td>
-          <td>${c.car_brand || '-'}</td>
-          <td>${c.client_fio}</td>
-          <td>${c.phone}</td>
-          <td><span class="status status-${c.status}">${c.status}</span></td>
-          <td><button class="btn btn-secondary" onclick="editClaim('${c.id}')">Редактировать</button></td>
-        </tr>
-      `).join('');
+      try {
+        let query = supabase
+          .from('claims')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        // Применяем фильтры
+        if (filters.search) {
+          query = query.or(`number.ilike.%${filters.search}%,car_number.ilike.%${filters.search}%,client_fio.ilike.%${filters.search}%`);
+        }
+        
+        if (filters.carNumber) {
+          query = query.ilike('car_number', `%${filters.carNumber}%`);
+        }
+        
+        if (filters.status) {
+          query = query.eq('status', filters.status);
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        currentClaims = data || [];
+        renderClaimsTable(currentClaims);
+        
+      } catch (error) {
+        body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#e74c3c;padding:20px;">Ошибка: ${error.message}</td></tr>`;
+      }
+    }
+
+    function renderClaimsTable(claims) {
+      const body = document.getElementById('claimsBody');
+      
+      if (!claims || claims.length === 0) {
+        body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
+        return;
+      }
+      
+      body.innerHTML = claims.map(claim => {
+        // Вычисляем общую сумму
+        const worksTotal = (claim.works || []).reduce((sum, work) => sum + (work.quantity * work.price), 0);
+        const partsTotal = (claim.parts || []).reduce((sum, part) => sum + (part.quantity * part.price), 0);
+        const totalAmount = worksTotal + partsTotal;
+        
+        return `
+          <tr>
+            <td>${claim.number || 'N/A'}</td>
+            <td>${new Date(claim.created_at).toLocaleDateString('ru-RU')}</td>
+            <td>${claim.car_number || '-'}</td>
+            <td>${claim.car_brand || '-'}</td>
+            <td>${claim.client_fio || '-'}</td>
+            <td>${claim.phone || '-'}</td>
+            <td><span class="status status-${claim.status}">${STATUS_LABELS[claim.status] || claim.status}</span></td>
+            <td>${formatCurrency(totalAmount)}</td>
+            <td>
+              <button class="btn btn-secondary" onclick="editClaim('${claim.id}')">Редактировать</button>
+              <button class="btn btn-primary" onclick="printClaimById('${claim.id}')">Печать</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function searchClaims() {
+      const searchTerm = document.getElementById('searchInput').value.trim();
+      const carNumber = document.getElementById('searchCarNumber').value.trim();
+      const status = document.getElementById('filterStatus').value;
+      
+      loadClaims({
+        search: searchTerm,
+        carNumber: carNumber,
+        status: status
+      });
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchCarNumber').value = '';
+      document.getElementById('filterStatus').value = '';
+      loadClaims();
+    }
+
+    function showClaimForm(claim = null) {
+      const isEdit = !!claim;
+      
+      document.getElementById('claimId').value = isEdit ? claim.id : '';
+      document.getElementById('claimNumber').value = isEdit ? claim.number : generateClaimNumber();
+      document.getElementById('modalTitle').textContent = isEdit ? 'Редактирование заявки' : 'Новая заявка';
+      
+      // Очистка формы
+      const form = document.getElementById('claimForm');
+      form.reset();
+      
+      // Заполнение основных полей
+      if (isEdit) {
+        document.getElementById('carNumber').value = claim.car_number || '';
+        document.getElementById('carBrand').value = claim.car_brand || '';
+        document.getElementById('vin').value = claim.vin || '';
+        document.getElementById('mileage').value = claim.mileage || '';
+        document.getElementById('clientFio').value = claim.client_fio || '';
+        document.getElementById('clientCompany').value = claim.client_company || '';
+        document.getElementById('phone').value = claim.phone || '';
+        document.getElementById('status').value = claim.status || 'draft';
+        
+        // Очистка таблиц
+        document.getElementById('complaintBody').innerHTML = '';
+        document.getElementById('worksBody').innerHTML = '';
+        document.getElementById('partsBody').innerHTML = '';
+        
+        // Заполнение таблиц
+        (claim.complaint || []).forEach(item => addRow('complaintBody', item, true));
+        (claim.works || []).forEach(item => addRow('worksBody', item, false));
+        (claim.parts || []).forEach(item => addRow('partsBody', item, false));
+        
+        // Показываем кнопку удаления
+        document.getElementById('deleteClaimBtn').style.display = 'inline-block';
+      } else {
+        // Новая заявка
+        document.getElementById('status').value = 'draft';
+        document.getElementById('complaintBody').innerHTML = '';
+        document.getElementById('worksBody').innerHTML = '';
+        document.getElementById('partsBody').innerHTML = '';
+        
+        // Добавляем начальные строки
+        addRow('complaintBody', null, true);
+        addRow('partsBody', null, false);
+        
+        // Скрываем кнопку удаления
+        document.getElementById('deleteClaimBtn').style.display = 'none';
+      }
+      
+      calculateTotals();
+      document.getElementById('claimModal').classList.add('show');
     }
 
     async function saveClaim(e) {
       e.preventDefault();
-      const { data, error: userError } = await supabase.auth.getUser();
-      const user = data?.user;
       
-      if (userError || !user) return alert('Сначала войдите в систему');
+      if (!currentUser) {
+        alert('Сначала войдите в систему');
+        return;
+      }
       
-      // Сбор данных
+      // Валидация
+      const carNumber = document.getElementById('carNumber').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const clientFio = document.getElementById('clientFio').value.trim();
+      
+      if (!carNumber || !phone || !clientFio) {
+        alert('Заполните обязательные поля: Госномер, Телефон и ФИО клиента');
+        return;
+      }
+      
+      // Сбор данных из таблиц
       const complaint = [], works = [], parts = [];
+      
       document.querySelectorAll('#complaintBody tr').forEach(tr => {
-        const [name, side, pos, qty] = Array.from(tr.querySelectorAll('input,select')).map(el => el.value);
-        if (name) complaint.push({name, side, position: pos, quantity: +qty || 1});
+        const inputs = tr.querySelectorAll('input, select');
+        const name = inputs[0].value.trim();
+        if (name) {
+          complaint.push({
+            name: name,
+            side: inputs[1].value,
+            position: inputs[2].value,
+            quantity: parseInt(inputs[3].value) || 1
+          });
+        }
       });
+      
       document.querySelectorAll('#worksBody tr').forEach(tr => {
-        const [name, side, pos, qty, price] = Array.from(tr.querySelectorAll('input,select')).map(el => el.value);
-        if (name) works.push({name, side, position: pos, quantity: +qty || 1, price: +price || 0});
+        const inputs = tr.querySelectorAll('input, select');
+        const name = inputs[0].value.trim();
+        if (name) {
+          works.push({
+            name: name,
+            side: inputs[1].value,
+            position: inputs[2].value,
+            quantity: parseInt(inputs[3].value) || 1,
+            price: parseFloat(inputs[4].value) || 0
+          });
+        }
       });
+      
       document.querySelectorAll('#partsBody tr').forEach(tr => {
-        const [art, name, side, pos, qty, price] = Array.from(tr.querySelectorAll('input,select')).map(el => el.value);
-        if (name || art) parts.push({article: art, name, side, position: pos, quantity: +qty || 1, price: +price || 0});
+        const inputs = tr.querySelectorAll('input, select');
+        const article = inputs[0].value.trim();
+        const name = inputs[1].value.trim();
+        if (name || article) {
+          parts.push({
+            article: article,
+            name: name,
+            side: inputs[2].value,
+            position: inputs[3].value,
+            quantity: parseInt(inputs[4].value) || 1,
+            price: parseFloat(inputs[5].value) || 0
+          });
+        }
       });
-
+      
       const claimData = {
-        car_number: document.getElementById('carNumber').value,
-        car_brand: document.getElementById('carBrand').value,
-        vin: document.getElementById('vin').value,
+        car_number: carNumber,
+        car_brand: document.getElementById('carBrand').value.trim(),
+        vin: document.getElementById('vin').value.trim(),
         mileage: parseInt(document.getElementById('mileage').value) || null,
-        client_fio: document.getElementById('clientFio').value,
-        client_company: document.getElementById('clientCompany').value,
-        phone: document.getElementById('phone').value,
+        client_fio: clientFio,
+        client_company: document.getElementById('clientCompany').value.trim(),
+        phone: phone,
         complaint: complaint,
         works: works,
         parts: parts,
         status: document.getElementById('status').value,
         number: document.getElementById('claimNumber').value,
-        user_id: user.id
+        user_id: currentUser.id
       };
-
-      const id = document.getElementById('claimId').value;
-      const { error } = id 
-        ? await supabase.from('claims').update(claimData).eq('id', id)
-        : await supabase.from('claims').insert([claimData]);
-
-      if (error) alert('Ошибка сохранения: ' + error.message);
-      else { alert('Заявка сохранена!'); closeModal(); loadClaims(); }
+      
+      try {
+        const claimId = document.getElementById('claimId').value;
+        let result;
+        
+        if (claimId) {
+          // Обновление существующей заявки
+          result = await supabase
+            .from('claims')
+            .update(claimData)
+            .eq('id', claimId);
+        } else {
+          // Создание новой заявки
+          result = await supabase
+            .from('claims')
+            .insert([claimData]);
+        }
+        
+        const { error } = result;
+        
+        if (error) throw error;
+        
+        alert('Заявка успешно сохранена!');
+        closeModal();
+        loadClaims();
+        
+      } catch (error) {
+        alert('Ошибка сохранения: ' + error.message);
+      }
     }
 
-    function showClaimForm() {
-      document.getElementById('claimId').value = '';
-      document.getElementById('claimNumber').value = generateClaimNumber();
-      document.getElementById('modalTitle').textContent = 'Новая заявка';
-      
-      // Очистка
-      ['carNumber','carBrand','vin','mileage','clientFio','clientCompany','phone'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('status').value = 'draft';
-      document.getElementById('complaintBody').innerHTML = '';
-      document.getElementById('worksBody').innerHTML = '';
-      document.getElementById('partsBody').innerHTML = '';
-      
-      // Инициализация
-      addRow('complaintBody');
-      addRow('partsBody');
-      calculateTotals();
-      
-      document.getElementById('claimModal').classList.add('show');
+    async function editClaim(id) {
+      try {
+        const { data, error } = await supabase
+          .from('claims')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (error) throw error;
+        
+        showClaimForm(data);
+        
+      } catch (error) {
+        alert('Ошибка загрузки заявки: ' + error.message);
+      }
     }
 
-    function editClaim(id) { alert('Редактирование — в разработке'); }
+    async function deleteClaim() {
+      const claimId = document.getElementById('claimId').value;
+      
+      if (!claimId) return;
+      
+      if (confirm('Вы уверены, что хотите удалить эту заявку? Это действие нельзя отменить.')) {
+        try {
+          const { error } = await supabase
+            .from('claims')
+            .delete()
+            .eq('id', claimId);
+          
+          if (error) throw error;
+          
+          alert('Заявка удалена!');
+          closeModal();
+          loadClaims();
+          
+        } catch (error) {
+          alert('Ошибка удаления: ' + error.message);
+        }
+      }
+    }
+
+    function printClaimById(id) {
+      const claim = currentClaims.find(c => c.id === id);
+      if (!claim) return;
+      
+      // Создаем временную форму для печати
+      showClaimForm(claim);
+      setTimeout(() => {
+        window.print();
+      }, 100);
+    }
 
     function closeModal() {
       document.getElementById('claimModal').classList.remove('show');
-    }
-
-    function printClaim() {
-      window.print();
     }
 
     // Инициализация
@@ -482,19 +827,40 @@
       // Кнопки
       document.getElementById('loginBtn').addEventListener('click', login);
       document.getElementById('logoutBtn').addEventListener('click', logout);
-      document.getElementById('createClaimBtn').addEventListener('click', showClaimForm);
+      document.getElementById('createClaimBtn').addEventListener('click', () => showClaimForm());
       document.getElementById('closeModalBtn').addEventListener('click', closeModal);
       document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
-      document.getElementById('printBtn').addEventListener('click', printClaim);
-      document.getElementById('addComplaintBtn').addEventListener('click', () => addRow('complaintBody'));
-      document.getElementById('addPartBtn').addEventListener('click', () => addRow('partsBody'));
+      document.getElementById('printBtn').addEventListener('click', () => window.print());
+      document.getElementById('deleteClaimBtn').addEventListener('click', deleteClaim);
+      
+      // Добавление строк в таблицы
+      document.getElementById('addComplaintBtn').addEventListener('click', () => addRow('complaintBody', null, true));
+      document.getElementById('addWorkBtn').addEventListener('click', () => addRow('worksBody', null, false));
+      document.getElementById('addPartBtn').addEventListener('click', () => addRow('partsBody', null, false));
+      
+      // Поиск
+      document.getElementById('searchBtn').addEventListener('click', searchClaims);
+      document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
+      
+      // Поиск по Enter
+      document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchClaims();
+      });
+      
+      // Форма
       document.getElementById('claimForm').addEventListener('submit', saveClaim);
       
-      // Закрытие модалки по клику на фон
-      document.getElementById('claimModal').addEventListener('click', e => {
+      // Закрытие модалки
+      document.getElementById('claimModal').addEventListener('click', (e) => {
         if (e.target.id === 'claimModal') closeModal();
       });
-
+      
+      // Автовход по Enter на форме входа
+      document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') login();
+      });
+      
+      // Проверка пользователя при загрузке
       checkUser();
     });
   </script>
