@@ -6,6 +6,7 @@
   <title>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* Стили остаются без изменений */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f5f5f5; padding: 10px; }
     .hide { display: none !important; }
@@ -179,7 +180,7 @@
             </div>
             <div class="form-group">
               <label>Телефон *</label>
-              <input type="tel" id="phone" required pattern="[\d\s\-\+\(\)]{10,}" title="Минимум 10 цифр">
+              <input type="tel" id="phone" required pattern="^[\d\s\-\+\(\)]{10,}$" title="Минимум 10 цифр">
               <div class="validation-error" id="phoneError">Введите корректный телефон</div>
             </div>
           </div>
@@ -315,7 +316,6 @@
     const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
     
-    // Исправление ошибки дублирования
     let supabase;
     if (!window.supabaseClient) {
       window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -341,15 +341,16 @@
     const maskEmail = (email) => {
       if (!email) return '';
       
-      // Исправление некорректного email с двоеточием
       const cleanEmail = email.split(':').pop().trim();
       const [username, domain] = cleanEmail.split('@');
       
       if (!username || !domain) return '***@***';
       
-      const maskedUsername = username.length > 3 
-        ? username.substring(0, 3) + '*'.repeat(Math.min(username.length - 3, 4))
-        : '*'.repeat(username.length);
+      // Обработка email с плюсом (как в vanbapten12345+master10@gmail.com)
+      const baseUsername = username.split('+')[0];
+      const maskedUsername = baseUsername.length > 3 
+        ? baseUsername.substring(0, 3) + '*'.repeat(Math.min(baseUsername.length - 3, 4))
+        : '*'.repeat(baseUsername.length);
       
       return `${maskedUsername}@${domain}`;
     };
@@ -436,7 +437,6 @@
           <td class="no-print"><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
         `;
       } else {
-        // Complaint
         tr.innerHTML = `
           <td><input type="text" placeholder="Описание проблемы" value="${data?.name || ''}"></td>
           <td></td><td></td>
@@ -445,14 +445,12 @@
         `;
       }
       
-      // Добавляем селекты для сторон и положений
       const sideCell = isPart ? 2 : isWork ? 1 : 1;
       const positionCell = isPart ? 3 : isWork ? 2 : 2;
       
       tr.querySelectorAll('td')[sideCell].appendChild(createSelect(SIDES, data?.side));
       tr.querySelectorAll('td')[positionCell].appendChild(createSelect(POSITIONS, data?.position));
       
-      // Обработчик удаления строки
       const deleteBtn = tr.querySelector('button');
       deleteBtn.onclick = () => {
         if (confirm('Удалить эту запись?')) {
@@ -462,7 +460,6 @@
         }
       };
       
-      // Обработчики для вычислений
       if (!isComplaint) {
         const inputs = tr.querySelectorAll('input[type="number"]');
         inputs.forEach(input => {
@@ -470,7 +467,6 @@
         });
       }
       
-      // Для жалоб - синхронизация с работами
       if (isComplaint) {
         tr.querySelector('input[type="text"]').addEventListener('input', () => syncComplaintToWorks());
         tr.querySelectorAll('select').forEach(select => {
@@ -483,7 +479,6 @@
     };
 
     const syncComplaintToWorks = () => {
-      // Сохраняем существующие цены работ
       const priceMap = {};
       document.querySelectorAll('#worksBody tr').forEach(tr => {
         const nameInput = tr.querySelector('td:first-child input');
@@ -493,7 +488,6 @@
         }
       });
       
-      // Собираем жалобы
       const complaints = [];
       document.querySelectorAll('#complaintBody tr').forEach(tr => {
         const inputs = tr.querySelectorAll('input, select');
@@ -508,7 +502,6 @@
         });
       });
       
-      // Обновляем таблицу работ с сохранением цен
       const worksBody = document.getElementById('worksBody');
       worksBody.innerHTML = '';
       
@@ -557,13 +550,13 @@
       const password = document.getElementById('loginPassword').value;
       const btn = document.getElementById('loginBtn');
       
-      // Валидация
       hideValidationError('emailError');
       hideValidationError('passwordError');
       
       let isValid = true;
       
-      if (!email || !email.includes('@')) {
+      // Исправленная валидация email (разрешает знак +)
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showValidationError('emailError', 'Введите корректный email');
         isValid = false;
       }
@@ -605,38 +598,43 @@
     };
 
     const checkUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      const loginScreen = document.getElementById('loginScreen');
-      const mainScreen = document.getElementById('mainScreen');
-      const userInfo = document.getElementById('userInfo');
-      
-      if (error || !data?.user) {
-        loginScreen.classList.remove('hide');
-        mainScreen.classList.add('hide');
-        userInfo.innerHTML = '';
-        currentUser = null;
-      } else {
-        loginScreen.classList.add('hide');
-        mainScreen.classList.remove('hide');
-        currentUser = data.user;
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        const loginScreen = document.getElementById('loginScreen');
+        const mainScreen = document.getElementById('mainScreen');
+        const userInfo = document.getElementById('userInfo');
         
-        // Безопасное отображение информации о пользователе
-        const maskedEmail = maskEmail(data.user.email);
-        const userName = data.user.user_metadata?.full_name || 
-                        data.user.email.split('@')[0].split(':').pop();
-        const initials = getUserInitials(userName);
-        
-        userInfo.innerHTML = `
-          <div class="user-display">
-            <div class="user-avatar">${initials}</div>
-            <div class="user-details">
-              <div class="user-name">${userName}</div>
-              <div class="user-role">${maskedEmail}</div>
+        if (error || !data?.session?.user) {
+          loginScreen.classList.remove('hide');
+          mainScreen.classList.add('hide');
+          userInfo.innerHTML = '';
+          currentUser = null;
+        } else {
+          loginScreen.classList.add('hide');
+          mainScreen.classList.remove('hide');
+          currentUser = data.session.user;
+          
+          const maskedEmail = maskEmail(data.session.user.email);
+          const userName = data.session.user.user_metadata?.full_name || 
+                          data.session.user.email.split('@')[0].split(':').pop();
+          const initials = getUserInitials(userName);
+          
+          userInfo.innerHTML = `
+            <div class="user-display">
+              <div class="user-avatar">${initials}</div>
+              <div class="user-details">
+                <div class="user-name">${userName}</div>
+                <div class="user-role">${maskedEmail}</div>
+              </div>
             </div>
-          </div>
-        `;
-        
-        loadClaims();
+          `;
+          
+          loadClaims();
+        }
+      } catch (error) {
+        console.error('Error checking user:', error);
+        document.getElementById('loginScreen').classList.remove('hide');
+        document.getElementById('mainScreen').classList.add('hide');
       }
     };
 
@@ -651,7 +649,6 @@
           .select('*')
           .order('created_at', { ascending: false });
         
-        // Применяем фильтры
         if (filters.search) {
           query = query.or(`number.ilike.%${filters.search}%,car_number.ilike.%${filters.search}%,client_fio.ilike.%${filters.search}%`);
         }
@@ -686,7 +683,6 @@
       }
       
       body.innerHTML = claims.map(claim => {
-        // Вычисляем общую сумму
         const worksTotal = (claim.works || []).reduce((sum, work) => sum + (work.quantity * work.price), 0);
         const partsTotal = (claim.parts || []).reduce((sum, part) => sum + (part.quantity * part.price), 0);
         const totalAmount = worksTotal + partsTotal;
@@ -736,16 +732,19 @@
       document.getElementById('claimNumber').value = isEdit ? claim.number : generateClaimNumber();
       document.getElementById('modalTitle').textContent = isEdit ? 'Редактирование заявки' : 'Новая заявка';
       
-      // Сброс ошибок валидации
+      // Сброс всех ошибок валидации
       ['carNumber', 'phone', 'clientFio'].forEach(field => {
         hideValidationError(`${field}Error`);
       });
       
-      // Очистка формы
-      const form = document.getElementById('claimForm');
-      form.reset();
+      // Полный сброс формы
+      document.getElementById('claimForm').reset();
       
-      // Заполнение основных полей
+      // Полная очистка таблиц
+      document.getElementById('complaintBody').innerHTML = '';
+      document.getElementById('worksBody').innerHTML = '';
+      document.getElementById('partsBody').innerHTML = '';
+      
       if (isEdit) {
         document.getElementById('carNumber').value = claim.car_number || '';
         document.getElementById('carBrand').value = claim.car_brand || '';
@@ -756,30 +755,21 @@
         document.getElementById('phone').value = claim.phone || '';
         document.getElementById('status').value = claim.status || 'draft';
         
-        // Очистка таблиц
-        document.getElementById('complaintBody').innerHTML = '';
-        document.getElementById('worksBody').innerHTML = '';
-        document.getElementById('partsBody').innerHTML = '';
-        
-        // Заполнение таблиц
+        // Заполнение таблиц данными из базы
         (claim.complaint || []).forEach(item => addRow('complaintBody', item, true));
         (claim.works || []).forEach(item => addRow('worksBody', item, false));
         (claim.parts || []).forEach(item => addRow('partsBody', item, false));
         
-        // Показываем кнопку удаления
         document.getElementById('deleteClaimBtn').style.display = 'inline-block';
       } else {
-        // Новая заявка
+        // Новая заявка - добавляем пустые строки
         document.getElementById('status').value = 'draft';
-        document.getElementById('complaintBody').innerHTML = '';
-        document.getElementById('worksBody').innerHTML = '';
-        document.getElementById('partsBody').innerHTML = '';
         
-        // Добавляем начальные строки
+        // Добавляем по одной пустой строке в каждую таблицу
         addRow('complaintBody', null, true);
+        addRow('worksBody', null, false);
         addRow('partsBody', null, false);
         
-        // Скрываем кнопку удаления
         document.getElementById('deleteClaimBtn').style.display = 'none';
       }
       
@@ -790,7 +780,6 @@
     const validateClaimForm = () => {
       let isValid = true;
       
-      // Госномер
       const carNumber = document.getElementById('carNumber').value.trim();
       if (!carNumber || !/^[А-Яа-я]\d{3}[А-Яа-я]{2}\d{2,3}$/i.test(carNumber)) {
         showValidationError('carNumberError', 'Введите корректный госномер (формат: А123БВ45)');
@@ -799,16 +788,15 @@
         hideValidationError('carNumberError');
       }
       
-      // Телефон
+      // Исправленное регулярное выражение для телефона
       const phone = document.getElementById('phone').value.trim();
-      if (!phone || !/[\d\s\-\+\(\)]{10,}/.test(phone)) {
+      if (!phone || !/^[\d\s\-\+\(\)]{10,}$/.test(phone.replace(/[^\d]/g, ''))) {
         showValidationError('phoneError', 'Введите корректный телефон (минимум 10 цифр)');
         isValid = false;
       } else {
         hideValidationError('phoneError');
       }
       
-      // ФИО клиента
       const clientFio = document.getElementById('clientFio').value.trim();
       if (!clientFio) {
         showValidationError('clientFioError', 'Введите ФИО клиента');
@@ -828,12 +816,10 @@
         return;
       }
       
-      // Валидация формы
       if (!validateClaimForm()) {
         return;
       }
       
-      // Сбор данных из таблиц
       const complaint = [], works = [], parts = [];
       
       document.querySelectorAll('#complaintBody tr').forEach(tr => {
@@ -900,13 +886,11 @@
         let result;
         
         if (claimId) {
-          // Обновление существующей заявки
           result = await supabase
             .from('claims')
             .update(claimData)
             .eq('id', claimId);
         } else {
-          // Создание новой заявки
           result = await supabase
             .from('claims')
             .insert([claimData]);
@@ -971,7 +955,6 @@
       const claim = currentClaims.find(c => c.id === id);
       if (!claim) return;
       
-      // Создаем временную форму для печати
       showClaimForm(claim);
       setTimeout(() => {
         window.print();
