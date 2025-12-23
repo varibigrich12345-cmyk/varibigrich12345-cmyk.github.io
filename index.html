@@ -421,7 +421,6 @@
                 <th>Номер</th>
                 <th>Дата</th>
                 <th>Госномер</th>
-                <th>Авто</th>
                 <th>Клиент</th>
                 <th>Телефон</th>
                 <th>Статус</th>
@@ -429,7 +428,7 @@
               </tr>
             </thead>
             <tbody id="claimsBody">
-              <tr><td colspan="8" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>
+              <tr><td colspan="7" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>
             </tbody>
           </table>
         </div>
@@ -446,26 +445,17 @@
       </div>
       <div class="modal-body">
         <form id="claimForm">
-          <!-- Скрытые поля -->
           <input type="hidden" id="claimId">
-          <input type="hidden" id="claimNumber" name="number">
-
+          
           <!-- Блок клиента и авто -->
           <div class="form-row">
             <div class="form-group">
               <label>Госномер *</label>
               <input type="text" id="carNumber" required>
             </div>
-          </div>
-
-          <div class="form-row">
             <div class="form-group">
-              <label>Марка *</label>
-              <input type="text" list="carBrandList" id="carBrand" required>
-            </div>
-            <div class="form-group">
-              <label>Модель *</label>
-              <input type="text" id="carModel" required>
+              <label>Марка/Модель</label>
+              <input type="text" id="carBrand">
             </div>
           </div>
 
@@ -514,7 +504,7 @@
           </div>
           <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addComplaintBtn">+ Добавить строку</button>
 
-          <!-- Список работ -->
+          <!-- Список работ (автоматически заполняется из описания) -->
           <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Список работ</h3>
           <div class="table-container" style="margin-bottom:15px;">
             <table id="worksTable" class="table-form">
@@ -585,46 +575,6 @@
     </div>
   </div>
 
-  <!-- Списки автозаполнения -->
-  <datalist id="carBrandList">
-    <option value="ГАЗель">
-    <option value="Ford Transit">
-    <option value="Hyundai HD78">
-    <option value="Peugeot Boxer">
-    <option value="MAN">
-    <option value="Mercedes-Benz Sprinter">
-    <option value="Volkswagen Transporter">
-    <option value="Renault Master">
-    <option value="IVECO Daily">
-    <option value="KAMAZ">
-  </datalist>
-
-  <datalist id="workList">
-    <option value="Замена шаровой опоры">
-    <option value="Замена тормозных колодок">
-    <option value="Замена масла в двигателе">
-    <option value="Замена свечей зажигания">
-    <option value="Замена ремня ГРМ">
-    <option value="Замена амортизатора">
-    <option value="Замена рулевой рейки">
-    <option value="Замена подшипника ступицы">
-    <option value="Замена тормозного шланга">
-    <option value="Замена радиатора">
-  </datalist>
-
-  <datalist id="partList">
-    <option value="Опора шаровая">
-    <option value="Колодки тормозные">
-    <option value="Масло моторное">
-    <option value="Свечи зажигания">
-    <option value="Ремень ГРМ">
-    <option value="Амортизатор">
-    <option value="Рейка рулевая">
-    <option value="Подшипник ступицы">
-    <option value="Шланг тормозной">
-    <option value="Радиатор">
-  </datalist>
-
   <script>
     // Supabase configuration — АКТУАЛЬНЫЙ КЛЮЧ
     const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
@@ -658,20 +608,11 @@
       return select;
     }
 
-    function generateClaimNumber() {
-      const now = new Date();
-      const year = now.getFullYear().toString().slice(-2);
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      return `CLAIM-${year}${month}${day}-${random}`;
-    }
-
     function addComplaintRow(data = null) {
       const tbody = document.getElementById('complaintBody');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="text" list="workList" placeholder="Наименование работы" value="${data?.name || ''}"></td>
+        <td><input type="text" placeholder="Наименование работы" value="${data?.name || ''}"></td>
         <td></td>
         <td></td>
         <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
@@ -685,22 +626,15 @@
         syncComplaintToWorks();
         calculateTotals();
       };
-
-      const nameInput = tr.querySelector('input[type="text"]');
-      nameInput.addEventListener('input', () => {
-        syncComplaintToWorks();
-      });
-
       tbody.appendChild(tr);
       attachInputEvents(tr);
-      syncComplaintToWorks();
     }
 
     function addWorkRow(data = null) {
       const tbody = document.getElementById('worksBody');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="text" list="workList" placeholder="Наименование работы" value="${data?.name || ''}"></td>
+        <td><input type="text" placeholder="Наименование работы" value="${data?.name || ''}"></td>
         <td></td>
         <td></td>
         <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
@@ -723,8 +657,8 @@
       const tbody = document.getElementById('partsBody');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="text" list="partList" placeholder="Артикул" value="${data?.article || ''}"></td>
-        <td><input type="text" list="partList" placeholder="Наименование" value="${data?.name || ''}"></td>
+        <td><input type="text" placeholder="Артикул" value="${data?.article || ''}"></td>
+        <td><input type="text" placeholder="Наименование" value="${data?.name || ''}"></td>
         <td></td>
         <td></td>
         <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
@@ -758,11 +692,16 @@
     function syncComplaintToWorks() {
       const worksBody = document.getElementById('worksBody');
       const complaintRows = Array.from(document.querySelectorAll('#complaintBody tr'));
+      
+      // Очищаем таблицу работ
       worksBody.innerHTML = '';
+      
+      // Копируем каждую строку из описания в список работ
       complaintRows.forEach(tr => {
         const inputs = tr.querySelectorAll('input, select');
         const name = inputs[0].value;
         if (!name) return;
+        
         const workData = {
           name: name,
           side: inputs[1].value,
@@ -770,6 +709,7 @@
           quantity: parseInt(inputs[3].value) || 1,
           price: 0
         };
+        
         addWorkRow(workData);
       });
     }
@@ -865,37 +805,7 @@
     }
 
     async function loadClaims() {
-      const { data, error } = await supabaseClient
-        .from('claims')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      const claimsBody = document.getElementById('claimsBody');
-
-      if (error) {
-        claimsBody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#e74c3c;padding:20px;">Ошибка загрузки: ${error.message}</td></tr>`;
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        claimsBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
-        return;
-      }
-
-      claimsBody.innerHTML = data.map(claim => `
-        <tr>
-          <td>${claim.number || '-'}</td>
-          <td>${new Date(claim.created_at).toLocaleString()}</td>
-          <td>${claim.car_number || '-'}</td>
-          <td>${claim.car_brand || '-'} ${claim.car_model || ''}</td>
-          <td>${claim.client_fio}</td>
-          <td>${claim.phone}</td>
-          <td><span class="status status-${claim.status}">${claim.status}</span></td>
-          <td>
-            <button class="btn btn-secondary" onclick="editClaim('${claim.id}')">Редактировать</button>
-          </td>
-        </tr>
-      `).join('');
+      document.getElementById('claimsBody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#7f8c8d;padding:20px;">Нет заявок</td></tr>';
     }
 
     function searchByCar() { alert('Поиск пока не реализован'); }
@@ -909,6 +819,7 @@
         return;
       }
 
+      // Сбор данных описания проблем (для сохранения)
       const complaint = [];
       document.querySelectorAll('#complaintBody tr').forEach(tr => {
         const inputs = tr.querySelectorAll('input, select');
@@ -922,6 +833,7 @@
         });
       });
 
+      // Сбор данных работ
       const works = [];
       document.querySelectorAll('#worksBody tr').forEach(tr => {
         const inputs = tr.querySelectorAll('input, select');
@@ -936,6 +848,7 @@
         });
       });
 
+      // Сбор данных запчастей
       const parts = [];
       document.querySelectorAll('#partsBody tr').forEach(tr => {
         const inputs = tr.querySelectorAll('input, select');
@@ -955,18 +868,16 @@
       const claimData = {
         car_number: document.getElementById('carNumber').value,
         car_brand: document.getElementById('carBrand').value,
-        car_model: document.getElementById('carModel').value,
         vin: document.getElementById('vin').value,
         mileage: parseInt(document.getElementById('mileage').value) || null,
         client_fio: document.getElementById('clientFio').value,
         client_company: document.getElementById('clientCompany').value,
         phone: document.getElementById('phone').value,
-        complaint: complaint,
+        complaint: complaint, // Сохраняем описание проблем
         status: document.getElementById('status').value,
         works: works,
         parts: parts,
-        user_id: user.id,
-        number: document.getElementById('claimNumber').value
+        user_id: user.id
       };
 
       const claimId = document.getElementById('claimId').value;
@@ -991,16 +902,13 @@
       document.getElementById('modalTitle').textContent = 'Новая заявка';
       document.getElementById('carNumber').value = '';
       document.getElementById('carBrand').value = '';
-      document.getElementById('carModel').value = '';
       document.getElementById('vin').value = '';
       document.getElementById('mileage').value = '';
       document.getElementById('clientFio').value = '';
       document.getElementById('clientCompany').value = '';
       document.getElementById('phone').value = '';
 
-      const claimNumber = generateClaimNumber();
-      document.getElementById('claimNumber').value = claimNumber;
-
+      // Очистка таблиц
       document.getElementById('complaintBody').innerHTML = '';
       document.getElementById('worksBody').innerHTML = '';
       document.getElementById('partsBody').innerHTML = '';
@@ -1014,10 +922,6 @@
       document.getElementById('claimModal').classList.add('show');
     }
 
-    function editClaim(id) {
-      alert('Редактирование заявки ' + id + ' — в разработке');
-    }
-
     function closeModal() {
       document.getElementById('claimModal').classList.remove('show');
     }
@@ -1028,6 +932,7 @@
 
     // ========== Инициализация ==========
     document.addEventListener('DOMContentLoaded', () => {
+      // Кнопки
       document.getElementById('loginBtn').addEventListener('click', login);
       document.getElementById('logoutBtn').addEventListener('click', logout);
       document.getElementById('searchBtn').addEventListener('click', searchByCar);
@@ -1041,9 +946,13 @@
       document.getElementById('addWorkBtn').addEventListener('click', () => addWorkRow());
       document.getElementById('addPartBtn').addEventListener('click', () => addPartRow());
       document.getElementById('claimForm').addEventListener('submit', saveClaim);
+
+      // Закрытие модалки по клику на фон
       document.getElementById('claimModal').addEventListener('click', (e) => {
         if (e.target.id === 'claimModal') closeModal();
       });
+
+      // Инициализация
       checkUser();
     });
   </script>
