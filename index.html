@@ -404,8 +404,11 @@
       e.preventDefault();
       const { data, error: userError } = await supabase.auth.getUser();
       const user = data?.user;
-      
-      if (userError || !user) return alert('Сначала войдите в систему');
+
+      if (userError || !user) {
+      alert('Сначала войдите в систему');
+      return;
+      }
       
       // Сбор данных
       const complaint = [], works = [], parts = [];
