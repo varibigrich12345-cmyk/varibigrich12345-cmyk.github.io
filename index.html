@@ -321,7 +321,7 @@
       color: #2c3e50;
     }
 
-    /* Стили для таблиц */
+    /* Стили для таблиц работ и запчастей */
     .table-form {
       width: 100%;
       border-collapse: collapse;
@@ -486,25 +486,12 @@
             <input type="tel" id="phone" required>
           </div>
 
-          <!-- Описание проблемы (таблица) -->
-          <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Описание проблемы (заполняется мастером)</h3>
-          <div class="table-container" style="margin-bottom:15px;">
-            <table id="complaintTable" class="table-form">
-              <thead>
-                <tr>
-                  <th>Наименование</th>
-                  <th>Сторона</th>
-                  <th>Положение</th>
-                  <th>Кол-во</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="complaintBody"></tbody>
-            </table>
+          <div class="form-group">
+            <label>Описание проблемы</label>
+            <textarea id="complaint" placeholder="Укажите жалобу клиента"></textarea>
           </div>
-          <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addComplaintBtn">+ Добавить строку</button>
 
-          <!-- Список работ (автоматически заполняется из описания) -->
+          <!-- Таблица РАБОТ -->
           <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Список работ</h3>
           <div class="table-container" style="margin-bottom:15px;">
             <table id="worksTable" class="table-form">
@@ -514,6 +501,7 @@
                   <th>Сторона</th>
                   <th>Положение</th>
                   <th>Кол-во</th>
+                  <th>Нормочасы</th>
                   <th class="print-hide">Цена</th>
                   <th class="print-hide">Сумма</th>
                   <th></th>
@@ -522,9 +510,9 @@
               <tbody id="worksBody"></tbody>
             </table>
           </div>
-          <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addWorkBtn">+ Добавить работу вручную</button>
+          <button type="button" class="btn btn-secondary" style="margin-bottom:20px;" id="addWorkBtn">+ Добавить работу</button>
 
-          <!-- Запчасти -->
+          <!-- Таблица ЗАПЧАСТЕЙ -->
           <h3 style="margin-top:25px; margin-bottom:15px; color:#2c3e50;">Запчасти</h3>
           <div class="table-container" style="margin-bottom:15px;">
             <table id="partsTable" class="table-form">
@@ -581,7 +569,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ========== Вспомогательные функции ==========
+    // ========== Вспомогательные функции для таблиц ==========
     function createSideSelect(value = '') {
       const select = document.createElement('select');
       const options = ['–', 'Левая', 'Правая', 'Передняя', 'Задняя'];
@@ -608,28 +596,6 @@
       return select;
     }
 
-    function addComplaintRow(data = null) {
-      const tbody = document.getElementById('complaintBody');
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><input type="text" placeholder="Наименование работы" value="${data?.name || ''}"></td>
-        <td></td>
-        <td></td>
-        <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
-        <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
-      `;
-      tr.querySelector('td:nth-child(2)').appendChild(createSideSelect(data?.side));
-      tr.querySelector('td:nth-child(3)').appendChild(createPositionSelect(data?.position));
-      const btn = tr.querySelector('button');
-      btn.onclick = () => {
-        tr.remove();
-        syncComplaintToWorks();
-        calculateTotals();
-      };
-      tbody.appendChild(tr);
-      attachInputEvents(tr);
-    }
-
     function addWorkRow(data = null) {
       const tbody = document.getElementById('worksBody');
       const tr = document.createElement('tr');
@@ -638,6 +604,7 @@
         <td></td>
         <td></td>
         <td><input type="number" min="1" value="${data?.quantity || 1}" style="width:60px;"></td>
+        <td><input type="number" min="0" step="0.1" value="${data?.hours || 0.5}" style="width:70px;"></td>
         <td class="print-hide"><input type="number" min="0" value="${data?.price || 0}" style="width:80px;"></td>
         <td class="print-hide" style="text-align:right;">${(data ? (data.quantity * data.price).toFixed(2) : '0.00')} ₽</td>
         <td><button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:12px;">–</button></td>
@@ -680,37 +647,7 @@
     function attachInputEvents(row) {
       const inputs = row.querySelectorAll('input[type="number"]');
       inputs.forEach(input => {
-        input.addEventListener('input', () => {
-          calculateTotals();
-          if (row.closest('#complaintBody')) {
-            syncComplaintToWorks();
-          }
-        });
-      });
-    }
-
-    function syncComplaintToWorks() {
-      const worksBody = document.getElementById('worksBody');
-      const complaintRows = Array.from(document.querySelectorAll('#complaintBody tr'));
-      
-      // Очищаем таблицу работ
-      worksBody.innerHTML = '';
-      
-      // Копируем каждую строку из описания в список работ
-      complaintRows.forEach(tr => {
-        const inputs = tr.querySelectorAll('input, select');
-        const name = inputs[0].value;
-        if (!name) return;
-        
-        const workData = {
-          name: name,
-          side: inputs[1].value,
-          position: inputs[2].value,
-          quantity: parseInt(inputs[3].value) || 1,
-          price: 0
-        };
-        
-        addWorkRow(workData);
+        input.addEventListener('input', calculateTotals);
       });
     }
 
@@ -719,9 +656,9 @@
       document.querySelectorAll('#worksBody tr').forEach(tr => {
         const cells = tr.querySelectorAll('td');
         const qty = parseFloat(cells[3].querySelector('input').value) || 0;
-        const price = parseFloat(cells[4].querySelector('input').value) || 0;
+        const price = parseFloat(cells[5].querySelector('input').value) || 0;
         const sum = qty * price;
-        cells[5].textContent = `${sum.toFixed(2)} ₽`;
+        cells[6].textContent = `${sum.toFixed(2)} ₽`;
         totalWorks += sum;
       });
 
@@ -819,20 +756,6 @@
         return;
       }
 
-      // Сбор данных описания проблем (для сохранения)
-      const complaint = [];
-      document.querySelectorAll('#complaintBody tr').forEach(tr => {
-        const inputs = tr.querySelectorAll('input, select');
-        const name = inputs[0].value;
-        if (!name) return;
-        complaint.push({
-          name: name,
-          side: inputs[1].value,
-          position: inputs[2].value,
-          quantity: parseInt(inputs[3].value) || 1
-        });
-      });
-
       // Сбор данных работ
       const works = [];
       document.querySelectorAll('#worksBody tr').forEach(tr => {
@@ -844,7 +767,8 @@
           side: inputs[1].value,
           position: inputs[2].value,
           quantity: parseInt(inputs[3].value) || 1,
-          price: parseFloat(inputs[4].value) || 0
+          hours: parseFloat(inputs[4].value) || 0,
+          price: parseFloat(inputs[5].value) || 0
         });
       });
 
@@ -873,7 +797,7 @@
         client_fio: document.getElementById('clientFio').value,
         client_company: document.getElementById('clientCompany').value,
         phone: document.getElementById('phone').value,
-        complaint: complaint, // Сохраняем описание проблем
+        complaint: document.getElementById('complaint').value,
         status: document.getElementById('status').value,
         works: works,
         parts: parts,
@@ -907,16 +831,14 @@
       document.getElementById('clientFio').value = '';
       document.getElementById('clientCompany').value = '';
       document.getElementById('phone').value = '';
+      document.getElementById('complaint').value = '';
+      document.getElementById('status').value = 'draft';
 
-      // Очистка таблиц
-      document.getElementById('complaintBody').innerHTML = '';
+      // Очистка и инициализация таблиц
       document.getElementById('worksBody').innerHTML = '';
       document.getElementById('partsBody').innerHTML = '';
-      addComplaintRow();
       addWorkRow();
       addPartRow();
-
-      document.getElementById('status').value = 'draft';
       calculateTotals();
 
       document.getElementById('claimModal').classList.add('show');
@@ -942,7 +864,6 @@
       document.getElementById('closeModalBtn').addEventListener('click', closeModal);
       document.getElementById('cancelModalBtn').addEventListener('click', closeModal);
       document.getElementById('printBtn').addEventListener('click', printClaim);
-      document.getElementById('addComplaintBtn').addEventListener('click', () => addComplaintRow());
       document.getElementById('addWorkBtn').addEventListener('click', () => addWorkRow());
       document.getElementById('addPartBtn').addEventListener('click', () => addPartRow());
       document.getElementById('claimForm').addEventListener('submit', saveClaim);
