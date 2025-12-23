@@ -104,14 +104,14 @@
                 <th>Действия</th>
               </tr>
             </thead>
-            <tbody id="claimsBody"><tr><td colspan="8" style="text-align:center;padding:20px;color:#7f8c8d;">Нет заявок</td></tr></tbody>
+            <tbody id="claimsBody"></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Заявка Modal -->
+  <!-- Claim Modal -->
   <div id="claimModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -123,7 +123,7 @@
           <input type="hidden" id="claimId">
           <input type="hidden" id="claimNumber">
 
-          <!-- Госномер и телефон — на одном уровне -->
+          <!-- Госномер и телефон -->
           <div class="form-row">
             <div><label>Госномер *</label><input type="text" id="carNumber" required></div>
             <div><label>Телефон *</label><input type="tel" id="phone" required></div>
@@ -148,25 +148,45 @@
 
           <!-- Описание проблемы -->
           <h3 style="margin:25px 0 15px; color:#2c3e50;">Описание проблемы</h3>
-          <div class="table-container"><table class="table-form" id="complaintTable">
-            <thead><tr><th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th></th></tr></thead>
-            <tbody id="complaintBody"></tbody>
-          </table></div>
+          <div class="table-container">
+            <table class="table-form" id="complaintTable">
+              <thead>
+                <tr>
+                  <th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="complaintBody"></tbody>
+            </table>
+          </div>
           <button type="button" class="btn btn-secondary" id="addComplaintBtn">+ Добавить</button>
 
           <!-- Работы -->
           <h3 style="margin:25px 0 15px; color:#2c3e50;">Список работ</h3>
-          <div class="table-container"><table class="table-form" id="worksTable">
-            <thead><tr><th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th class="print-hide">Цена</th><th class="print-hide">Сумма</th><th></th></tr></thead>
-            <tbody id="worksBody"></tbody>
-          </table></div>
+          <div class="table-container">
+            <table class="table-form" id="worksTable">
+              <thead>
+                <tr>
+                  <th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th>
+                  <th class="print-hide">Цена</th><th class="print-hide">Сумма</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="worksBody"></tbody>
+            </table>
+          </div>
 
           <!-- Запчасти -->
           <h3 style="margin:25px 0 15px; color:#2c3e50;">Запчасти</h3>
-          <div class="table-container"><table class="table-form" id="partsTable">
-            <thead><tr><th>Артикул</th><th>Наименование</th><th>Сторона</th><th>Положение</th><th>Кол-во</th><th class="print-hide">Цена</th><th class="print-hide">Сумма</th><th></th></tr></thead>
-            <tbody id="partsBody"></tbody>
-          </table></div>
+          <div class="table-container">
+            <table class="table-form" id="partsTable">
+              <thead>
+                <tr>
+                  <th>Артикул</th><th>Наименование</th><th>Сторона</th><th>Положение</th>
+                  <th>Кол-во</th><th class="print-hide">Цена</th><th class="print-hide">Сумма</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="partsBody"></tbody>
+            </table>
+          </div>
           <button type="button" class="btn btn-secondary" id="addPartBtn">+ Добавить запчасть</button>
 
           <!-- Итоги -->
@@ -178,13 +198,15 @@
 
           <!-- Статус -->
           <div class="form-row full">
-            <div><label>Статус</label>
-            <select id="status">
-              <option value="draft">Черновик</option>
-              <option value="agreed">Согласовано</option>
-              <option value="in_progress">В работе</option>
-              <option value="completed">Завершена</option>
-            </select></div>
+            <div>
+              <label>Статус</label>
+              <select id="status">
+                <option value="draft">Черновик</option>
+                <option value="agreed">Согласовано</option>
+                <option value="in_progress">В работе</option>
+                <option value="completed">Завершена</option>
+              </select>
+            </div>
           </div>
 
           <!-- Кнопки -->
@@ -204,24 +226,20 @@
     <option value="Peugeot Boxer"><option value="MAN"><option value="Mercedes-Benz Sprinter">
     <option value="Volkswagen Transporter"><option value="Renault Master"><option value="IVECO Daily">
   </datalist>
-  <datalist id="workList">
-    <option value="Замена шаровой опоры"><option value="Замена тормозных колодок"><option value="Замена масла">
-  </datalist>
-  <datalist id="partList">
-    <option value="Опора шаровая"><option value="Колодки тормозные"><option value="Масло моторное">
-  </datalist>
+  <datalist id="workList"><option value="Замена шаровой опоры"><option value="Замена тормозных колодок"></datalist>
+  <datalist id="partList"><option value="Опора шаровая"><option value="Колодки тормозные"></datalist>
 
   <script>
-    // Supabase
+    // === SUPABASE CONFIG ===
     const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Вспомогательные функции
+    // === HELPERS ===
     const sides = ['–', 'Левая', 'Правая', 'Передняя', 'Задняя'];
     const positions = ['–', 'Верхний', 'Нижний', 'Передний', 'Задний', 'Центр'];
 
-    function createSelect(options, value = '') {
+    const createSelect = (options, value = '') => {
       const select = document.createElement('select');
       options.forEach(opt => {
         const el = document.createElement('option');
@@ -231,14 +249,15 @@
         select.appendChild(el);
       });
       return select;
-    }
+    };
 
-    function generateClaimNumber() {
+    const generateClaimNumber = () => {
       const now = new Date();
       return `CLAIM-${String(now.getFullYear()).slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*1000)).padStart(3,'0')}`;
-    }
+    };
 
-    function addRow(containerId, data = null, isComplaint = false) {
+    // === TABLE ROWS ===
+    const addRow = (containerId, data = null, isComplaint = false) => {
       const tbody = document.getElementById(containerId);
       const isPart = containerId === 'partsBody';
       const tr = document.createElement('tr');
@@ -279,15 +298,15 @@
       if (containerId === 'complaintBody') {
         tr.querySelector('input').addEventListener('input', () => syncComplaintToWorks());
       }
-    }
+    };
 
-    function attachNumberEvents(row) {
+    const attachNumberEvents = (row) => {
       row.querySelectorAll('input[type="number"]').forEach(input => {
         input.addEventListener('input', calculateTotals);
       });
-    }
+    };
 
-    function syncComplaintToWorks() {
+    const syncComplaintToWorks = () => {
       const worksBody = document.getElementById('worksBody');
       worksBody.innerHTML = '';
       document.querySelectorAll('#complaintBody tr').forEach(tr => {
@@ -302,9 +321,9 @@
           price: 0
         });
       });
-    }
+    };
 
-    function calculateTotals() {
+    const calculateTotals = () => {
       let totalWorks = 0;
       document.querySelectorAll('#worksBody tr').forEach(tr => {
         const cells = tr.querySelectorAll('td');
@@ -328,10 +347,10 @@
       document.getElementById('totalWorks').textContent = `${totalWorks.toFixed(2)} ₽`;
       document.getElementById('totalParts').textContent = `${totalParts.toFixed(2)} ₽`;
       document.getElementById('totalSum').textContent = `${(totalWorks + totalParts).toFixed(2)} ₽`;
-    }
+    };
 
-    // Основные функции
-    async function login() {
+    // === MAIN FUNCTIONS ===
+    const login = async () => {
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
       const btn = document.getElementById('loginBtn');
@@ -349,34 +368,32 @@
         btn.disabled = false;
         btn.textContent = 'Войти';
       }
-    }
+    };
 
-    async function logout() {
+    const logout = async () => {
       await supabase.auth.signOut();
       checkUser();
-    }
+    };
 
-    async function checkUser() {
+    const checkUser = async () => {
       const { data, error } = await supabase.auth.getUser();
-      const ui = {
-        login: document.getElementById('loginScreen'),
-        main: document.getElementById('mainScreen'),
-        user: document.getElementById('userInfo')
-      };
+      const loginScreen = document.getElementById('loginScreen');
+      const mainScreen = document.getElementById('mainScreen');
+      const userInfo = document.getElementById('userInfo');
       
       if (error || !data?.user) {
-        ui.login.classList.remove('hide');
-        ui.main.classList.add('hide');
-        ui.user.textContent = '';
+        loginScreen.classList.remove('hide');
+        mainScreen.classList.add('hide');
+        userInfo.textContent = '';
       } else {
-        ui.login.classList.add('hide');
-        ui.main.classList.remove('hide');
-        ui.user.textContent = data.user.email;
+        loginScreen.classList.add('hide');
+        mainScreen.classList.remove('hide');
+        userInfo.textContent = data.user.email;
         loadClaims();
       }
-    }
+    };
 
-    async function loadClaims() {
+    const loadClaims = async () => {
       const { data, error } = await supabase
         .from('claims')
         .select('*')
@@ -388,9 +405,9 @@
       
       body.innerHTML = data.map(c => `
         <tr>
-          <td>${c.number}</td>
+          <td>${c.number || '-'}</td>
           <td>${new Date(c.created_at).toLocaleString()}</td>
-          <td>${c.car_number}</td>
+          <td>${c.car_number || '-'}</td>
           <td>${c.car_brand || '-'}</td>
           <td>${c.client_fio}</td>
           <td>${c.phone}</td>
@@ -398,17 +415,16 @@
           <td><button class="btn btn-secondary" onclick="editClaim('${c.id}')">Редактировать</button></td>
         </tr>
       `).join('');
-    }
+    };
 
-    async function saveClaim(e) {
+    const saveClaim = async (e) => {
       e.preventDefault();
+      
+      // === КРИТИЧЕСКИ ВАЖНО: безопасное извлечение user ===
       const { data, error: userError } = await supabase.auth.getUser();
       const user = data?.user;
-
-      if (userError || !user) {
-      alert('Сначала войдите в систему');
-      return;
-      }
+      
+      if (userError || !user) return alert('Сначала войдите в систему');
       
       // Сбор данных
       const complaint = [], works = [], parts = [];
@@ -446,41 +462,42 @@
         ? await supabase.from('claims').update(claimData).eq('id', id)
         : await supabase.from('claims').insert([claimData]);
 
-      if (error) alert('Ошибка сохранения: ' + error.message);
-      else { alert('Заявка сохранена!'); closeModal(); loadClaims(); }
-    }
+      if (error) {
+        console.error('Supabase error:', error);
+        alert('Ошибка сохранения: ' + error.message);
+      } else {
+        alert('Заявка сохранена!');
+        closeModal();
+        loadClaims();
+      }
+    };
 
-    function showClaimForm() {
+    const showClaimForm = () => {
       document.getElementById('claimId').value = '';
       document.getElementById('claimNumber').value = generateClaimNumber();
       document.getElementById('modalTitle').textContent = 'Новая заявка';
       
-      // Очистка
-      ['carNumber','carBrand','vin','mileage','clientFio','clientCompany','phone'].forEach(id => document.getElementById(id).value = '');
+      ['carNumber','carBrand','vin','mileage','clientFio','clientCompany','phone'].forEach(id => 
+        document.getElementById(id).value = ''
+      );
       document.getElementById('status').value = 'draft';
+      
       document.getElementById('complaintBody').innerHTML = '';
       document.getElementById('worksBody').innerHTML = '';
       document.getElementById('partsBody').innerHTML = '';
       
-      // Инициализация
       addRow('complaintBody');
       addRow('partsBody');
       calculateTotals();
       
       document.getElementById('claimModal').classList.add('show');
-    }
+    };
 
-    function editClaim(id) { alert('Редактирование — в разработке'); }
+    const editClaim = (id) => { alert('Редактирование — в разработке'); };
+    const closeModal = () => { document.getElementById('claimModal').classList.remove('show'); };
+    const printClaim = () => { window.print(); };
 
-    function closeModal() {
-      document.getElementById('claimModal').classList.remove('show');
-    }
-
-    function printClaim() {
-      window.print();
-    }
-
-    // Инициализация
+    // === INIT ===
     document.addEventListener('DOMContentLoaded', () => {
       // Кнопки
       document.getElementById('loginBtn').addEventListener('click', login);
