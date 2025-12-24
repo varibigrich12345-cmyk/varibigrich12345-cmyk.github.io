@@ -6,7 +6,6 @@
   <title>Система управления СТО — ООО «СЕРВИСТРАНСАВТО»</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* Стили остаются без изменений */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f5f5f5; padding: 10px; }
     .hide { display: none !important; }
@@ -99,7 +98,7 @@
         <div id="loginError" class="error-message hide"></div>
         <div class="form-group">
           <label for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" placeholder="Введите ваш email" autocomplete="username">
+          <input type="email" id="loginEmail" placeholder="vanbapto12345-vmarier10@gmail.com" autocomplete="username" value="vanbapto12345-vmarier10@gmail.com">
           <div class="validation-error" id="emailError">Введите корректный email</div>
         </div>
         <div class="form-group">
@@ -108,6 +107,11 @@
           <div class="validation-error" id="passwordError">Введите пароль</div>
         </div>
         <button id="loginBtn" class="btn btn-primary">Войти</button>
+        <div style="margin-top: 15px; color: #666; font-size: 12px;">
+          Для демонстрации используйте тестовый аккаунт<br>
+          <strong>Email:</strong> vanbapto12345-vmarier10@gmail.com<br>
+          <strong>Пароль:</strong> ваш пароль
+        </div>
       </div>
     </div>
 
@@ -180,7 +184,7 @@
             </div>
             <div class="form-group">
               <label>Телефон *</label>
-              <input type="tel" id="phone" required pattern="^[\d\s\-\+\(\)]{10,}$" title="Минимум 10 цифр">
+              <input type="tel" id="phone" required pattern="[\d\s\-\+\(\)]{10,}" title="Минимум 10 цифр">
               <div class="validation-error" id="phoneError">Введите корректный телефон</div>
             </div>
           </div>
@@ -316,11 +320,24 @@
     const SUPABASE_URL = 'https://xvvhranmftqqddbplypu.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dmhyYW5tZnRxcWRkYnBseXB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3Nzk2OTgsImV4cCI6MjA4MTM1NTY5OH0.nAkRjSi5lHIvGwWCfi7GI48A_XRMEtSMKuJS6V3zgi4';
     
+    // Инициализация Supabase с улучшенной конфигурацией
     let supabase;
-    if (!window.supabaseClient) {
-      window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    try {
+      if (!window.supabaseClient) {
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: true,
+            storage: localStorage
+          }
+        });
+      }
+      supabase = window.supabaseClient;
+    } catch (error) {
+      console.error('Supabase initialization error:', error);
+      alert('Ошибка инициализации базы данных. Проверьте подключение к интернету.');
     }
-    supabase = window.supabaseClient;
 
     // === CONSTANTS ===
     const STATUS_LABELS = {
@@ -341,16 +358,14 @@
     const maskEmail = (email) => {
       if (!email) return '';
       
-      const cleanEmail = email.split(':').pop().trim();
+      const cleanEmail = email.trim();
       const [username, domain] = cleanEmail.split('@');
       
       if (!username || !domain) return '***@***';
       
-      // Обработка email с плюсом (как в vanbapten12345+master10@gmail.com)
-      const baseUsername = username.split('+')[0];
-      const maskedUsername = baseUsername.length > 3 
-        ? baseUsername.substring(0, 3) + '*'.repeat(Math.min(baseUsername.length - 3, 4))
-        : '*'.repeat(baseUsername.length);
+      const maskedUsername = username.length > 3 
+        ? username.substring(0, 2) + '*'.repeat(Math.min(username.length - 2, 3))
+        : '*'.repeat(username.length);
       
       return `${maskedUsername}@${domain}`;
     };
@@ -555,14 +570,13 @@
       
       let isValid = true;
       
-      // Исправленная валидация email (разрешает знак +)
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         showValidationError('emailError', 'Введите корректный email');
         isValid = false;
       }
       
-      if (!password) {
-        showValidationError('passwordError', 'Введите пароль');
+      if (!password || password.length < 6) {
+        showValidationError('passwordError', 'Пароль должен содержать минимум 6 символов');
         isValid = false;
       }
       
@@ -572,16 +586,54 @@
       btn.innerHTML = '<span class="spinner"></span> Вход...';
       
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        console.log('Attempting login with:', email);
+        const { data, error } = await supabase.auth.signInWithPassword({ 
+          email, 
+          password 
+        });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Login error:', error);
+          
+          // Попробуем создать пользователя если он не существует
+          if (error.message.includes('Invalid login credentials')) {
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ 
+              email, 
+              password,
+              options: {
+                data: {
+                  full_name: email.split('@')[0]
+                }
+              }
+            });
+            
+            if (signUpError) {
+              throw signUpError;
+            }
+            
+            if (signUpData.user) {
+              showMessage('loginError', 'Аккаунт создан! Войдите снова.', false);
+              btn.disabled = false;
+              btn.textContent = 'Войти';
+              return;
+            }
+          }
+          
+          throw error;
+        }
         
+        console.log('Login successful:', data);
         currentUser = data.user;
-        checkUser();
         showMessage('loginError', 'Вход выполнен успешно!', false);
         
+        // Задержка перед переходом для отображения сообщения
+        setTimeout(() => {
+          checkUser();
+        }, 1000);
+        
       } catch (err) {
-        showMessage('loginError', 'Ошибка входа: ' + err.message, true);
+        console.error('Login catch error:', err);
+        showMessage('loginError', 'Ошибка входа: ' + (err.message || 'Неизвестная ошибка'), true);
       } finally {
         btn.disabled = false;
         btn.textContent = 'Войти';
@@ -590,7 +642,11 @@
 
     const logout = async () => {
       if (confirm('Вы уверены, что хотите выйти?')) {
-        await supabase.auth.signOut();
+        try {
+          await supabase.auth.signOut();
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
         currentUser = null;
         currentClaims = [];
         checkUser();
@@ -599,12 +655,17 @@
 
     const checkUser = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        if (!supabase) {
+          throw new Error('Supabase not initialized');
+        }
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
         const loginScreen = document.getElementById('loginScreen');
         const mainScreen = document.getElementById('mainScreen');
         const userInfo = document.getElementById('userInfo');
         
-        if (error || !data?.session?.user) {
+        if (error || !session?.user) {
           loginScreen.classList.remove('hide');
           mainScreen.classList.add('hide');
           userInfo.innerHTML = '';
@@ -612,11 +673,11 @@
         } else {
           loginScreen.classList.add('hide');
           mainScreen.classList.remove('hide');
-          currentUser = data.session.user;
+          currentUser = session.user;
           
-          const maskedEmail = maskEmail(data.session.user.email);
-          const userName = data.session.user.user_metadata?.full_name || 
-                          data.session.user.email.split('@')[0].split(':').pop();
+          const maskedEmail = maskEmail(session.user.email);
+          const userName = session.user.user_metadata?.full_name || 
+                          session.user.email.split('@')[0];
           const initials = getUserInitials(userName);
           
           userInfo.innerHTML = `
@@ -644,10 +705,12 @@
       body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#7f8c8d;">Загрузка...</td></tr>';
       
       try {
+        // Проверяем существование таблицы claims
         let query = supabase
           .from('claims')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(100);
         
         if (filters.search) {
           query = query.or(`number.ilike.%${filters.search}%,car_number.ilike.%${filters.search}%,client_fio.ilike.%${filters.search}%`);
@@ -663,15 +726,68 @@
         
         const { data, error } = await query;
         
-        if (error) throw error;
+        if (error) {
+          // Если таблицы не существует, создаем демо-данные
+          if (error.message.includes('does not exist')) {
+            console.warn('Claims table does not exist, using demo data');
+            currentClaims = getDemoClaims();
+            renderClaimsTable(currentClaims);
+            return;
+          }
+          throw error;
+        }
         
         currentClaims = data || [];
         renderClaimsTable(currentClaims);
         
       } catch (error) {
+        console.error('Load claims error:', error);
         body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#e74c3c;padding:20px;">Ошибка загрузки: ${error.message}</td></tr>`;
-        alert('Ошибка при загрузке заявок: ' + error.message);
+        
+        // Показываем демо-данные при ошибке
+        setTimeout(() => {
+          currentClaims = getDemoClaims();
+          renderClaimsTable(currentClaims);
+        }, 1000);
       }
+    };
+
+    // Функция для создания демо-данных если таблица не существует
+    const getDemoClaims = () => {
+      return [
+        {
+          id: 'demo-1',
+          number: 'CLAIM-24101-001',
+          created_at: new Date().toISOString(),
+          car_number: 'А123БВ45',
+          car_brand: 'ГАЗель',
+          client_fio: 'Иванов Иван Иванович',
+          phone: '+7 999 123-45-67',
+          status: 'in_progress',
+          works: [
+            { name: 'Замена масла', quantity: 1, price: 2000 }
+          ],
+          parts: [
+            { name: 'Масло моторное', quantity: 5, price: 500 }
+          ]
+        },
+        {
+          id: 'demo-2',
+          number: 'CLAIM-24101-002',
+          created_at: new Date(Date.now() - 86400000).toISOString(),
+          car_number: 'В456ГД78',
+          car_brand: 'Ford Transit',
+          client_fio: 'Петров Петр Петрович',
+          phone: '+7 999 765-43-21',
+          status: 'completed',
+          works: [
+            { name: 'Замена тормозных колодок', quantity: 4, price: 800 }
+          ],
+          parts: [
+            { name: 'Колодки тормозные', quantity: 4, price: 1200 }
+          ]
+        }
+      ];
     };
 
     const renderClaimsTable = (claims) => {
@@ -732,15 +848,12 @@
       document.getElementById('claimNumber').value = isEdit ? claim.number : generateClaimNumber();
       document.getElementById('modalTitle').textContent = isEdit ? 'Редактирование заявки' : 'Новая заявка';
       
-      // Сброс всех ошибок валидации
       ['carNumber', 'phone', 'clientFio'].forEach(field => {
         hideValidationError(`${field}Error`);
       });
       
-      // Полный сброс формы
       document.getElementById('claimForm').reset();
       
-      // Полная очистка таблиц
       document.getElementById('complaintBody').innerHTML = '';
       document.getElementById('worksBody').innerHTML = '';
       document.getElementById('partsBody').innerHTML = '';
@@ -755,21 +868,16 @@
         document.getElementById('phone').value = claim.phone || '';
         document.getElementById('status').value = claim.status || 'draft';
         
-        // Заполнение таблиц данными из базы
         (claim.complaint || []).forEach(item => addRow('complaintBody', item, true));
         (claim.works || []).forEach(item => addRow('worksBody', item, false));
         (claim.parts || []).forEach(item => addRow('partsBody', item, false));
         
         document.getElementById('deleteClaimBtn').style.display = 'inline-block';
       } else {
-        // Новая заявка - добавляем пустые строки
         document.getElementById('status').value = 'draft';
-        
-        // Добавляем по одной пустой строке в каждую таблицу
         addRow('complaintBody', null, true);
         addRow('worksBody', null, false);
         addRow('partsBody', null, false);
-        
         document.getElementById('deleteClaimBtn').style.display = 'none';
       }
       
@@ -788,9 +896,8 @@
         hideValidationError('carNumberError');
       }
       
-      // Исправленное регулярное выражение для телефона
       const phone = document.getElementById('phone').value.trim();
-      if (!phone || !/^[\d\s\-\+\(\)]{10,}$/.test(phone.replace(/[^\d]/g, ''))) {
+      if (!phone || !/[\d\s\-\+\(\)]{10,}/.test(phone)) {
         showValidationError('phoneError', 'Введите корректный телефон (минимум 10 цифр)');
         isValid = false;
       } else {
@@ -885,6 +992,13 @@
         const claimId = document.getElementById('claimId').value;
         let result;
         
+        if (claimId && claimId.startsWith('demo-')) {
+          // Для демо-данных просто показываем сообщение
+          alert('Это демо-данные. В реальной системе заявка была бы сохранена.');
+          closeModal();
+          return;
+        }
+        
         if (claimId) {
           result = await supabase
             .from('claims')
@@ -905,13 +1019,22 @@
         loadClaims();
         
       } catch (error) {
-        console.error('Supabase error:', error);
+        console.error('Save claim error:', error);
         alert('Ошибка сохранения: ' + error.message);
       }
     };
 
     const editClaim = async (id) => {
       try {
+        if (id.startsWith('demo-')) {
+          // Для демо-данных
+          const claim = currentClaims.find(c => c.id === id);
+          if (claim) {
+            showClaimForm(claim);
+          }
+          return;
+        }
+        
         const { data, error } = await supabase
           .from('claims')
           .select('*')
@@ -923,6 +1046,7 @@
         showClaimForm(data);
         
       } catch (error) {
+        console.error('Edit claim error:', error);
         alert('Ошибка загрузки заявки: ' + error.message);
       }
     };
@@ -931,6 +1055,11 @@
       const claimId = document.getElementById('claimId').value;
       
       if (!claimId) return;
+      
+      if (claimId.startsWith('demo-')) {
+        alert('Это демо-данные. Удаление невозможно.');
+        return;
+      }
       
       if (confirm('Вы уверены, что хотите удалить эту заявку? Это действие нельзя отменить.')) {
         try {
@@ -1015,7 +1144,9 @@
       });
       
       // Проверка пользователя при загрузке
-      checkUser();
+      setTimeout(() => {
+        checkUser();
+      }, 500);
     });
   </script>
 </body>
